@@ -1,0 +1,30 @@
+{% extends 'music/base.html' %}
+
+{% block title %}{{ music.title }} 的详细信息{% endblock %}
+
+{% block content %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h1 class="card-title">{{ music.title }}</h1>
+            <h4 class="card-subtitle mb-2 text-muted">艺术家: {{ music.artist }}</h4>
+            <h5 class="card-text">专辑: {{ music.album }}</h5>
+            <h5 class="card-text">发行日期: {{ music.release_date }}</h5>
+
+            {% if music.cover_image %}
+                <img src="{{ music.cover_image.url }}" alt="封面图像" class="img-fluid mb-3">
+            {% endif %}
+
+            <h5>歌词:</h5>
+            <p>{{ music.lyrics }}</p>
+
+            <audio controls>
+                <source src="{{ music.audio_file.url }}" type="audio/mpeg">
+                您的浏览器不支持音频元素。
+            </audio>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a class="btn btn-secondary" href="{% url 'music_list' %}">返回音乐列表</a>
+    </div>
+{% endblock %}

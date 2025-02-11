@@ -1,0 +1,15 @@
+{% extends 'music/base.html' %}
+
+{% block title %}上传音乐{% endblock %}
+
+{% block content %}
+    <h1 class="text-center mt-5">上传音乐</h1>
+    <form method="POST" enctype="multipart/form-data" class="mt-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">上传</button>
+    </form>
+    <div class="mt-4 text-center">
+        <a class="btn btn-secondary" href="{% url 'music_list' %}">返回音乐列表</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'music/base.html' %}
+{% load static %}
+
+{% block title %}用户个人资料{% endblock %}
+
+{% block content %}
+<h1 class="text-center mt-5">个人资料</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}  <!-- 渲染表单 -->
+    <button type="submit" class="btn btn-primary">更新个人资料</button>
+</form>
+
+<h2 class="mt-5">我的音乐</h2>
+<ul class="list-group mt-4">
+    {% for song in user_songs %}
+    <li class="list-group-item">
+        <strong>{{ song.title }}</strong> - {{ song.artist }} （专辑: {{ song.album }}，发行日期: {{ song.release_date }}）
+        <br>
+        <a href="{{ song.file.url }}" class="btn btn-secondary btn-sm">下载音乐</a>
+    </li>
+    {% empty %}
+    <li class="list-group-item">没有上传的音乐。</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

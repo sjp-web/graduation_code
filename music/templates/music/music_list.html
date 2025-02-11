@@ -1,0 +1,21 @@
+{% extends 'music/base.html' %}
+
+{% block title %}音乐列表{% endblock %}
+
+{% block content %}
+    <h1 class="text-center mt-5">音乐列表</h1>
+    <ul class="list-group mt-4">
+        {% for song in music %}
+            <li class="list-group-item">
+                <a href="{% url 'music_detail' song.id %}">{{ song.title }}</a> - {{ song.artist }} （专辑: {{ song.album }}，发行日期: {{ song.release_date }}）
+            </li>
+        {% empty %}
+            <li class="list-group-item">没有可用的音乐。</li>
+        {% endfor %}
+    </ul>
+    <div class="mt-4 text-center">
+        <a class="btn btn-primary" href="{% url 'upload_music' %}">上传音乐</a>
+        <a class="btn btn-secondary" href="{% url 'register' %}">注册账户</a>
+        <a class="btn btn-info" href="{% url 'login' %}">登录</a>
+    </div>
+{% endblock %}
