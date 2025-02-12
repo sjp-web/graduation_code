@@ -2,10 +2,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login as auth_login, authenticate
-from .models import Music
-from .forms import UserRegistrationForm, MusicForm, ProfileForm
+from .models import Music, Comment
+from .forms import UserRegistrationForm, MusicForm, ProfileForm, CommentForm
 from django.contrib.auth import logout
 from django.db.models import Q
+from django.contrib import messages
 
 # 用户注册视图
 def register(request):
@@ -115,3 +116,31 @@ def music_search(request):
         ).distinct()  # 使用 Q 对象实现模糊匹配
 
     return render(request, 'music/music_search.html', {'music': music, 'query': query})
+
+@login_required
+def music_detail(request, music_id):
+    music = get_object_or_404(Music, pk=music_id)
+    comments = music.comments.all()
+
+    if request.method == 'POST':
+        if 'comment_id' in request.POST:
+            # 删除评论
+            comment_id = request.POST.get('comment_id')
+            comment = get_object_or_404(Comment, pk=comment_id, user=request.user)
+            comment.delete()
+            messages.success(request, '评论已成功删除。')
+            return redirect('music_detail', music_id=music.id)
+        else:
+            # 添加评论
+            form = CommentForm(request.POST)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.music = music
+                comment.user = request.user
+                comment.save()
+                messages.success(request, '评论已成功发布。')
+                return redirect('music_detail', music_id=music.id)
+    else:
+        form = CommentForm()
+
+    return render(request, 'music/music_detail.html', {'music': music, 'comments': comments, 'form': form})

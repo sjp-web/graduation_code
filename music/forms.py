@@ -1,6 +1,7 @@
 from django import forms
 from .models import Music
 from .models import Profile
+from .models import Comment
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
@@ -54,3 +55,9 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['bio', 'profile_picture']  # 可编辑字段
+
+# 定义评论表单
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']

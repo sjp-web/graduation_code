@@ -5,7 +5,6 @@ from django.dispatch import receiver
 from django.db import models
 
 class Music(models.Model):
-    objects = None
     title = models.CharField(max_length=200) # 标题
     artist = models.CharField(max_length=100) # 艺术家
     album = models.CharField(max_length=100) # 专辑
@@ -38,4 +37,12 @@ def save_user_profile(sender, instance, **kwargs):
     # 确保没有再次调用用户的 save() 方法
     pass  # 不需要执行任何操作
 
+# 音乐评论系统
+class Comment(models.Model):
+    music = models.ForeignKey(Music, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.music.title}'

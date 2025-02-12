@@ -27,4 +27,38 @@
     <div class="mt-4 text-center">
         <a class="btn btn-secondary" href="{% url 'music_list' %}">返回音乐列表</a>
     </div>
+
+    <div class="mt-5">
+        <h3>评论</h3>
+        <ul class="list-group mb-3">
+            {% if comments %}
+                {% for comment in comments %}
+                    <li class="list-group-item">
+                        <strong>{{ comment.user.username }}</strong> ({{ comment.created_at|date:"Y-m-d H:i:s" }}):
+                        <p>{{ comment.content }}</p>
+                        {% if comment.user == user %}
+                            <form method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li class="list-group-item">还没有评论。成为第一个评论的人吧！</li>
+            {% endif %}
+        </ul>
+
+        {% if user.is_authenticated %}
+            <h4>添加评论</h4>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">提交评论</button>
+            </form>
+        {% else %}
+            <p>请先 <a href="{% url 'login' %}">登录</a> 以发表评论。</p>
+        {% endif %}
+    </div>
 {% endblock %}
