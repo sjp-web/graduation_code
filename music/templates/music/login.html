@@ -1,15 +1,18 @@
-{% extends 'music/base.html' %}
+<!-- music/templates/music/login.html -->
 
-{% block title %}登录{% endblock %}
-
-{% block content %}
-    <h1 class="text-center mt-5">登录</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
     <form method="post">
         {% csrf_token %}
-        <div class="form-group">
-            {{ form.as_p }}
-        </div>
-        <button type="submit" class="btn btn-primary">登录</button>
-        <p class="mt-2">没有账户？ <a href="{% url 'register' %}">在这里注册</a>.</p>
+        {{ form.as_p }}  <!-- 表单元素 -->
+        <button type="submit">Login</button>
     </form>
-{% endblock %}
+</body>
+</html>

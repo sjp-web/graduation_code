@@ -14,13 +14,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# music_website/urls.py
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+
 urlpatterns = [
-    path('admin/', admin.site.urls), # 管理后台 URL
-    path('music/', include('music.urls')), # 引入音乐应用的 URL 配置
+    path('admin/', admin.site.urls),  # 管理后台 URL
+    path('accounts/', include('music.urls')),  # 引入音乐应用的 URL 配置
 ]
 
 # 配置媒体文件的 URL

@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'music',                       # Your custom app
 ]
 
+# 这里添加 LOGIN_URL
+LOGIN_URL = '/accounts/login/'  # 设置自定义登录路径
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,9 +59,8 @@ ROOT_URLCONF = 'music_website.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
-        'APP_DIRS': True,
+        'DIRS': [],  # 如果没有额外的模板路径，保持为空
+        'APP_DIRS': True,  # 确保设置为 True，这样 Django 会自动在每个应用程序的 templates 目录中查找模板
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
