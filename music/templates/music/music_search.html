@@ -1,0 +1,23 @@
+<!-- music_search.html -->
+{% extends "music/base.html" %}
+
+{% block content %}
+<h2>音乐搜索结果</h2>
+
+<form method="get" action="{% url 'music_search' %}">
+    <input type="text" name="q" placeholder="搜索音乐..." value="{{ query }}">
+    <button type="submit">搜索</button>
+</form>
+
+<ul>
+    {% if music %}
+        {% for item in music %}
+            <li>
+                <a href="{% url 'music_detail' item.id %}">{{ item.title }} - {{ item.artist }}</a>
+            </li>
+        {% endfor %}
+    {% else %}
+        <li>未找到符合条件的音乐。</li>
+    {% endif %}
+</ul>
+{% endblock %}
