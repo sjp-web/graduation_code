@@ -1,5 +1,5 @@
 
-from .views import music_list, upload_music, login_view
+from .views import music_list, upload_music, music_search
 from . import views
 from django.urls import path
 
@@ -12,4 +12,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),  # 注销路径
     path('<int:music_id>/', views.music_detail, name='music_detail'),  # 音乐详细信息页面
     path('profile/create/', views.create_profile, name='profile_creation'), # 创建用户个人资料页面
+    path('search/', music_search, name='music_search'),
 ]

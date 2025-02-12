@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.db import models
 
 class Music(models.Model):
+    objects = None
     title = models.CharField(max_length=200) # 标题
     artist = models.CharField(max_length=100) # 艺术家
     album = models.CharField(max_length=100) # 专辑
@@ -19,9 +20,9 @@ class Music(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    bio = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # 与用户一对一关联
+    bio = models.TextField(blank=True, null=True) # 简介
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True) # 头像
 
     def __str__(self):
         return self.user.username
