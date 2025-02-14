@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 建立基础路径
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -132,8 +132,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+# 静态文件的 URL 配置
 
 STATIC_URL = 'static/'
+
+# # 新增静态文件目录设置
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "music", "static"),  # 告诉 Django 查找 music 应用内的 static 目录
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

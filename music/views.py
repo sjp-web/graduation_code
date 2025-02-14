@@ -26,13 +26,13 @@ def login_view(request):
         return redirect('music_list')  # 如果已登录，则重定向到音乐列表
 
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = AuthenticationForm(request, data=request.POST)  # 使用 Django 内置的 AuthenticationForm
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                auth_login(request, user)
+                auth_login(request, user)  # 使用 auth_login 登录用户
                 return redirect('music_list')  # 登录成功后重定向
     else:
         form = AuthenticationForm()  # GET 请求，显示登录表单

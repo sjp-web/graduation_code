@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}音乐网站{% endblock %}</title>
+    <!-- 引入 bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<!--    &lt;!&ndash; 引入 自己调试的 CSS &ndash;&gt;-->
+<!--    <link rel="stylesheet" href="/css/style.css">-->
+    <!-- 引入 Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!--    {% load custom_filters %}  &lt;!&ndash; 加载自定义标签库 &ndash;&gt;-->
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -18,23 +24,23 @@
                     <a class="nav-link" href="{% url 'music_list' %}">音乐列表</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'upload_music' %}">上传音乐</a>
+                    <a class="nav-link" href="{% url 'upload_music' %}"><i class="fas fa-upload"></i> 上传音乐</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'music_search' %}">搜索音乐</a>
+                    <a class="nav-link" href="{% url 'music_search' %}"><i class="fas fa-search"></i> 搜索音乐</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'register' %}">注册</a>
+                    <a class="nav-link" href="{% url 'register' %}"><i class="fas fa-user-plus"></i> 注册</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'login' %}">登录</a>
+                    <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> 登录</a>
                 </li>
                 {% if user.is_authenticated %}  <!-- 检查用户是否已登录 -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'profile' %}">个人资料</a>
+                    <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> 个人资料</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}">注销</a>  <!-- 添加注销链接 -->
+                    <a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> 注销</a>  <!-- 添加注销链接 -->
                 </li>
                 {% endif %}
             </ul>
