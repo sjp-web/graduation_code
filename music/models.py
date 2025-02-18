@@ -1,8 +1,9 @@
-
 from django.contrib.auth.models import User # 用户个人资料管理
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import models
+from django_resized import ResizedImageField
+from django.core.validators import FileExtensionValidator
 
 class Music(models.Model):
     title = models.CharField(max_length=200) # 标题
@@ -21,7 +22,20 @@ class Music(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # 与用户一对一关联
     bio = models.TextField(blank=True, null=True) # 简介
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True) # 头像
+    avatar = ResizedImageField(
+        size=[200, 200],
+        quality=85,
+        upload_to='avatars/%Y/%m/%d/',
+        default='avatars/default.png',
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
+    )
+    location = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='所在地'
+    )
 
     def __str__(self):
         return self.user.username

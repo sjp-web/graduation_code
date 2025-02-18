@@ -1,46 +1,53 @@
+{% extends 'music/base.html' %}
 {% load custom_filters %}
-<!-- music/templates/music/login.html -->
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录</title>
-    <!-- 引入 Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h1 class="text-center mb-4">登录</h1>
-                <div class="card">
-                    <div class="card-body">
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label for="username">用户名</label>
-                                {{ form.username|add_class:"form-control" }}
-                            </div>
-                            <div class="form-group">
-                                <label for="password">密码</label>
-                                {{ form.password|add_class:"form-control" }}
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-block">登录</button>
-                        </form>
-                        <div class="text-center mt-3">
-                            <a href="{% url 'register' %}">还没有账户？注册</a>
+
+{% block title %}登录{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>登录
+                </h1>
+                <p class="text-muted">欢迎回来！请登录您的账户</p>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user text-primary me-2"></i>用户名
+                            </label>
+                            {{ form.username|add_class:"form-control" }}
                         </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock text-primary me-2"></i>密码
+                            </label>
+                            {{ form.password|add_class:"form-control" }}
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>登录
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-0">还没有账户？ 
+                            <a href="{% url 'register' %}" class="text-primary text-decoration-none">
+                                立即注册
+                                <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- 引入 jQuery 和 Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

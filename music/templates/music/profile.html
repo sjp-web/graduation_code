@@ -1,68 +1,98 @@
 {% extends 'music/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
-{% block title %}用户个人资料{% endblock %}
+{% block title %}个人资料{% endblock %}
 
 {% block content %}
-    <!-- 整体容器 -->
-    <div class="container mt-5 mb-5">
-        <!-- 个人资料标题 -->
-        <div class="text-center mb-4">
-            <h1 class="display-4 text-primary">个人资料</h1>
-            <p class="text-muted">在这里管理您的个人信息和音乐收藏</p>
-        </div>
-
-        <!-- 个人资料表单 -->
-        <div class="card shadow-lg mb-5 bg-white rounded">
-            <div class="card-header bg-primary text-white text-center">
-                <h2 class="mb-0">编辑个人资料</h2>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- 个人资料标题 -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-user-circle me-2"></i>个人资料
+                </h1>
+                <p class="text-muted">管理您的个人信息和音乐收藏</p>
             </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <!-- 遍历表单字段，为每个字段添加 Bootstrap 样式 -->
-                    {% for field in form %}
+
+            <!-- 个人资料表单 -->
+            <div class="card shadow-sm mb-5">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-edit me-2"></i>编辑个人资料
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% for field in form %}
                         <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
-                            {{ field }}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field|add_class:"form-control" }}
                             {% if field.help_text %}
-                                <div class="form-text text-muted">{{ field.help_text }}</div>
+                            <div class="form-text">{{ field.help_text }}</div>
                             {% endif %}
                             {% for error in field.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            <div class="alert alert-danger mt-2">
+                                {{ error }}
+                            </div>
                             {% endfor %}
                         </div>
-                    {% endfor %}
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-lg px-4 me-sm-3">更新个人资料</button>
-                        <button type="reset" class="btn btn-secondary btn-lg px-4">重置</button>
-                    </div>
-                </form>
+                        {% endfor %}
+                        <div class="d-flex gap-2 justify-content-center mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>保存更改
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-2"></i>重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- 我的音乐部分 -->
-        <div class="card shadow-lg bg-white rounded">
-            <div class="card-header bg-primary text-white text-center">
-                <h2 class="mb-0">我的音乐</h2>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for song in user_songs %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">{{ song.title }}</h5>
-                                <p class="mb-0 text-muted">{{ song.artist }} （专辑: {{ song.album }}，发行日期: {{ song.release_date }}）</p>
+            <!-- 我的音乐列表 -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-music me-2"></i>我的音乐
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    {% if user_songs %}
+                    <div class="list-group list-group-flush">
+                        {% for song in user_songs %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ song.title }}</h5>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-user me-1"></i>{{ song.artist }}
+                                        <span class="mx-2">|</span>
+                                        <i class="fas fa-compact-disc me-1"></i>{{ song.album }}
+                                        <span class="mx-2">|</span>
+                                        <i class="fas fa-calendar-alt me-1"></i>{{ song.release_date }}
+                                    </p>
+                                </div>
+                                <a href="{{ song.file.url }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i>下载
+                                </a>
                             </div>
-                            <a href="{{ song.file.url }}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-download me-2"></i> 下载音乐
-                            </a>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item text-center text-muted">没有上传的音乐。</li>
-                    {% endfor %}
-                </ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-music fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">您还没有上传任何音乐</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

@@ -4,6 +4,7 @@ from .models import Profile
 from .models import Comment
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from django.core.validators import FileExtensionValidator
 
 # 创建音乐上传表单
 class MusicForm(forms.ModelForm):
@@ -54,7 +55,23 @@ class UserRegistrationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['bio', 'profile_picture']  # 可编辑字段
+        fields = ['avatar', 'bio']
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4}),
+        }
+        help_texts = {
+            'avatar': '支持格式：JPG/PNG，最大2MB',
+            'bio': '简短的个人介绍（最多500字）',
+        }
+    
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar:
+            if avatar.size > 2*1024*1024:  # 2MB限制
+                raise forms.ValidationError("文件大小超过2MB限制")
+            if not avatar.name.lower().endswith(('.jpg', '.jpeg', '.png')):
+                raise forms.ValidationError("仅支持JPG/PNG格式")
+        return avatar
 
 # 定义评论表单
 class CommentForm(forms.ModelForm):
