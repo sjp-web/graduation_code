@@ -32,9 +32,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'register' %}"><i class="fas fa-user-plus"></i> 注册</a>
                 </li>
+                <!-- 根据用户是否登录来显示或隐藏登录按钮 -->
+                {% if not user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> 登录</a>
                 </li>
+                {% endif %}
                 {% if user.is_authenticated %}  <!-- 检查用户是否已登录 -->
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> 个人资料</a>
