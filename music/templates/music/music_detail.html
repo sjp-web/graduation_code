@@ -1,64 +1,164 @@
 {% extends 'music/base.html' %}
+{% load static %}
+{% load custom_filters %}
 
-{% block title %}{{ music.title }} 的详细信息{% endblock %}
+{% block title %}{{ music.title }} 详情{% endblock %}
 
 {% block content %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <h1 class="card-title">{{ music.title }}</h1>
-            <h4 class="card-subtitle mb-2 text-muted">艺术家: {{ music.artist }}</h4>
-            <h5 class="card-text">专辑: {{ music.album }}</h5>
-            <h5 class="card-text">发行日期: {{ music.release_date }}</h5>
+<div class="container py-5">
+    <!-- 返回导航 -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'music_list' %}">音乐列表</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ music.title }}</li>
+        </ol>
+    </nav>
 
-            {% if music.cover_image %}
-                <img src="{{ music.cover_image.url }}" alt="封面图像" class="img-fluid mb-3">
-            {% endif %}
+    <!-- 音乐主信息卡片 -->
+    <div class="card shadow-lg mb-5">
+        <div class="row g-0">
+            <!-- 封面图片 -->
+            <div class="col-md-4">
+                {% if music.cover_image %}
+                <img src="{{ music.cover_image.url }}" class="img-fluid rounded-start" alt="专辑封面" 
+                     style="height: 300px; object-fit: cover;">
+                {% else %}
+                <div class="bg-light h-100 d-flex align-items-center justify-content-center">
+                    <i class="fas fa-compact-disc fa-5x text-muted"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 音乐信息 -->
+            <div class="col-md-8">
+                <div class="card-body h-100 d-flex flex-column">
+                    <h1 class="card-title display-5 fw-bold mb-4">{{ music.title }}</h1>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-user fa-lg text-primary me-3"></i>
+                            <h3 class="mb-0">{{ music.artist }}</h3>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-compact-disc fa-lg text-primary me-3"></i>
+                            <h4 class="mb-0">{{ music.album }}</h4>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt fa-lg text-primary me-3"></i>
+                            <h5 class="mb-0">{{ music.release_date|date:"Y年m月d日" }}</h5>
+                        </div>
+                    </div>
 
-            <h5>歌词:</h5>
-            <p>{{ music.lyrics }}</p>
-
-            <audio controls>
-                <source src="{{ music.audio_file.url }}" type="audio/mpeg">
-                您的浏览器不支持音频元素。
-            </audio>
+                    <!-- 音频播放器 -->
+                    <div class="mt-auto">
+                        <audio controls class="w-100">
+                            <source src="{{ music.audio_file.url }}" type="audio/mpeg">
+                            您的浏览器不支持音频播放
+                        </audio>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="mt-4 text-center">
-        <a class="btn btn-secondary" href="{% url 'music_list' %}">返回音乐列表</a>
+    <!-- 歌词部分 -->
+    {% if music.lyrics %}
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0"><i class="fas fa-file-alt me-2"></i>歌词</h3>
+        </div>
+        <div class="card-body">
+            <pre class="lyrics-pre">{{ music.lyrics }}</pre>
+        </div>
     </div>
+    {% endif %}
 
-    <div class="mt-5">
-        <h3>评论</h3>
-        <ul class="list-group mb-3">
+    <!-- 评论部分 -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0"><i class="fas fa-comments me-2"></i>评论</h3>
+            <span class="badge bg-light text-primary fs-6">{{ comments|length }} 条评论</span>
+        </div>
+        
+        <div class="card-body">
             {% if comments %}
+            <div class="list-group list-group-flush">
                 {% for comment in comments %}
-                    <li class="list-group-item">
-                        <strong>{{ comment.user.username }}</strong> ({{ comment.created_at|date:"Y-m-d H:i:s" }}):
-                        <p>{{ comment.content }}</p>
-                        {% if comment.user == user %}
-                            <form method="POST" style="display:inline;">
+                <div class="list-group-item">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            {% if comment.user.profile.avatar %}
+                            <img src="{{ comment.user.profile.avatar.url }}" 
+                                 class="rounded-circle" 
+                                 alt="用户头像"
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-user fa-lg"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">{{ comment.user.username }}</h5>
+                                <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                            </div>
+                            <p class="mb-0">{{ comment.content }}</p>
+                            {% if comment.user == user %}
+                            <form method="POST" class="mt-2">
                                 {% csrf_token %}
                                 <input type="hidden" name="comment_id" value="{{ comment.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>删除
+                                </button>
                             </form>
-                        {% endif %}
-                    </li>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
+            </div>
             {% else %}
-                <li class="list-group-item">还没有评论。成为第一个评论的人吧！</li>
+            <div class="text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">还没有评论，快来发表第一个评论吧！</p>
+            </div>
             {% endif %}
-        </ul>
+        </div>
 
-        {% if user.is_authenticated %}
-            <h4>添加评论</h4>
+        <!-- 评论表单 -->
+        <div class="card-footer">
+            {% if user.is_authenticated %}
+            <h4 class="mb-4"><i class="fas fa-edit me-2"></i>发表评论</h4>
             <form method="POST">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">提交评论</button>
+                <div class="input-group">
+                    {{ form.content|add_class:"form-control" }}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>提交
+                    </button>
+                </div>
             </form>
-        {% else %}
-            <p>请先 <a href="{% url 'login' %}">登录</a> 以发表评论。</p>
-        {% endif %}
+            {% else %}
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                请先 <a href="{% url 'login' %}" class="alert-link">登录</a> 以发表评论
+            </div>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+<style>
+.lyrics-pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+}
+</style>
 {% endblock %}
