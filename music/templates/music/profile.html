@@ -4,25 +4,65 @@
 {% block title %}用户个人资料{% endblock %}
 
 {% block content %}
-<h1 class="text-center mt-5">个人资料</h1>
+    <!-- 整体容器 -->
+    <div class="container mt-5 mb-5">
+        <!-- 个人资料标题 -->
+        <div class="text-center mb-4">
+            <h1 class="display-4 text-primary">个人资料</h1>
+            <p class="text-muted">在这里管理您的个人信息和音乐收藏</p>
+        </div>
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}  <!-- 渲染表单 -->
-    <button type="submit" class="btn btn-primary">更新个人资料</button>
-</form>
+        <!-- 个人资料表单 -->
+        <div class="card shadow-lg mb-5 bg-white rounded">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="mb-0">编辑个人资料</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- 遍历表单字段，为每个字段添加 Bootstrap 样式 -->
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-4 me-sm-3">更新个人资料</button>
+                        <button type="reset" class="btn btn-secondary btn-lg px-4">重置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-<h2 class="mt-5">我的音乐</h2>
-<ul class="list-group mt-4">
-    {% for song in user_songs %}
-    <li class="list-group-item">
-        <strong>{{ song.title }}</strong> - {{ song.artist }} （专辑: {{ song.album }}，发行日期: {{ song.release_date }}）
-        <br>
-        <a href="{{ song.file.url }}" class="btn btn-secondary btn-sm">下载音乐</a>
-    </li>
-    {% empty %}
-    <li class="list-group-item">没有上传的音乐。</li>
-    {% endfor %}
-</ul>
-
+        <!-- 我的音乐部分 -->
+        <div class="card shadow-lg bg-white rounded">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="mb-0">我的音乐</h2>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for song in user_songs %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ song.title }}</h5>
+                                <p class="mb-0 text-muted">{{ song.artist }} （专辑: {{ song.album }}，发行日期: {{ song.release_date }}）</p>
+                            </div>
+                            <a href="{{ song.file.url }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download me-2"></i> 下载音乐
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted">没有上传的音乐。</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
 {% endblock %}
