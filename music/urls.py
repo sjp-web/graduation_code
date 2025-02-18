@@ -1,5 +1,4 @@
-
-from .views import music_list, upload_music, music_search
+from .views import music_list, upload_music, music_search, search_suggestions
 from . import views
 from django.urls import path
 
@@ -13,4 +12,5 @@ urlpatterns = [
     path('<int:music_id>/', views.music_detail, name='music_detail'),  # 音乐详细信息页面
     path('profile/create/', views.create_profile, name='profile_creation'), # 创建用户个人资料页面
     path('search/', music_search, name='music_search'),
+    path('api/search-suggestions/', search_suggestions, name='search_suggestions'),
 ]

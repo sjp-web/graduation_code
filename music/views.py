@@ -7,6 +7,9 @@ from .forms import UserRegistrationForm, MusicForm, ProfileForm, CommentForm
 from django.contrib.auth import logout
 from django.db.models import Q
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+import json
 
 # 用户注册视图
 def register(request):
@@ -65,12 +68,16 @@ def music_list(request):
 # 上传音乐视图
 @login_required
 def upload_music(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         form = MusicForm(request.POST, request.FILES)
         if form.is_valid():
             music = form.save(commit=False)
             music.uploaded_by = request.user
             music.save()
+            
+            # 如果是AJAX请求，返回JSON响应
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success'})
             return redirect('music_list')
     else:
         form = MusicForm()
@@ -103,19 +110,69 @@ def logout_view(request):
     logout(request)  # 注销用户
     return redirect('login')  # 注销后重定向到登录页面
 
-@login_required
 def music_search(request):
-    query = request.GET.get('q')  # 从 GET 请求中获取搜索关键词
-    music = Music.objects.all()  # 初始所有音乐
-
-    if query:  # 如果用户输入了搜索关键词
-        music = music.filter(
+    query = request.GET.get('q', '')
+    artist = request.GET.get('artist', '')
+    album = request.GET.get('album', '')
+    year = request.GET.get('year', '')
+    
+    # 构建查询条件
+    music_list = Music.objects.all()
+    if query:
+        music_list = music_list.filter(
             Q(title__icontains=query) |
             Q(artist__icontains=query) |
             Q(album__icontains=query)
-        ).distinct()  # 使用 Q 对象实现模糊匹配
+        )
+    
+    # 应用高级筛选
+    if artist:
+        music_list = music_list.filter(artist__icontains=artist)
+    if album:
+        music_list = music_list.filter(album__icontains=album)
+    if year:
+        music_list = music_list.filter(release_date__year=year)
+    
+    # 分页处理
+    paginator = Paginator(music_list, 10)  # 每页显示10条
+    page = request.GET.get('page')
+    music = paginator.get_page(page)
+    
+    # 获取所有年份选项
+    years = Music.objects.dates('release_date', 'year', order='DESC')
+    years = [date.year for date in years]
+    
+    context = {
+        'music': music,
+        'query': query,
+        'filters': {
+            'artist': artist,
+            'album': album,
+            'year': year
+        },
+        'years': years,
+        'is_paginated': paginator.num_pages > 1
+    }
+    
+    return render(request, 'music/music_search.html', context)
 
-    return render(request, 'music/music_search.html', {'music': music, 'query': query})
+def search_suggestions(request):
+    """处理实时搜索建议的API视图"""
+    query = request.GET.get('q', '').strip()
+    suggestions = []
+    
+    if len(query) >= 2:  # 至少2个字符才开始搜索
+        # 从数据库中获取匹配的歌曲
+        matches = Music.objects.filter(
+            Q(title__icontains=query) |
+            Q(artist__icontains=query) |
+            Q(album__icontains=query)
+        )[:5]  # 限制返回5个建议
+        
+        for music in matches:
+            suggestions.append(f"{music.title} - {music.artist}")
+    
+    return JsonResponse({'suggestions': suggestions})
 
 @login_required
 def music_detail(request, music_id):

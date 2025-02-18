@@ -18,6 +18,21 @@ class Music(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ['-release_date']  # 默认按发布日期降序排序
+        
+    def get_duration(self):
+        """获取音频文件时长"""
+        # 这里可以添加获取音频时长的逻辑
+        pass
+    
+    @property
+    def file_size(self):
+        """获取文件大小"""
+        try:
+            return self.audio_file.size
+        except:
+            return 0
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # 与用户一对一关联

@@ -5,12 +5,27 @@ from .models import Comment
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import FileExtensionValidator
+from django.core.exceptions import ValidationError
+from django.conf import settings
 
 # 创建音乐上传表单
 class MusicForm(forms.ModelForm):
     class Meta:
         model = Music
         fields = ['title', 'artist', 'album', 'release_date', 'audio_file']  # 包括文件字段
+
+    def clean_audio_file(self):
+        audio_file = self.cleaned_data.get('audio_file')
+        if audio_file:
+            # 检查文件大小
+            if audio_file.size > settings.MAX_UPLOAD_SIZE:
+                raise ValidationError('文件大小不能超过20MB')
+            
+            # 检查文件类型
+            if audio_file.content_type not in settings.ALLOWED_AUDIO_TYPES:
+                raise ValidationError('只支持MP3、WAV和AAC格式')
+                
+        return audio_file
 
 # 创建用户注册表单
 class UserRegistrationForm(UserCreationForm):

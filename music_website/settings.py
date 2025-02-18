@@ -145,3 +145,16 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# 文件上传配置
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+# 分页设置
+PAGE_SIZE = 10
+
+# 允许的文件类型
+ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac']
+MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20MB
+

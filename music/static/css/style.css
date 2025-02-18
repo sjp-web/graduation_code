@@ -64,7 +64,9 @@ body {
     border: 2px dashed #dee2e6;
     border-radius: 1rem;
     padding: 2rem;
+    text-align: center;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .file-upload-wrapper:hover {
@@ -90,6 +92,46 @@ body {
     color: var(--primary-color);
 }
 
+/* 搜索建议样式 */
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* 音频播放器样式 */
+audio {
+    width: 100%;
+    height: 40px;
+    margin: 0.5rem 0;
+}
+
+audio::-webkit-media-controls-panel {
+    background-color: #f8f9fa;
+}
+
+/* 分页样式优化 */
+.pagination .page-link {
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* 视图切换按钮样式 */
+.btn-group .btn-outline-primary.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .card-title {
@@ -98,5 +140,13 @@ body {
     
     .input-group-lg > .form-control {
         font-size: 1rem;
+    }
+    
+    .file-upload-wrapper {
+        padding: 1rem;
+    }
+    
+    audio {
+        height: 36px;
     }
 }
