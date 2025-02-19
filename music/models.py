@@ -22,6 +22,7 @@ class Music(models.Model):
         ('rock', '摇滚'),
         ('classical', '古典')
     ), default='pop', verbose_name='分类')
+    download_count = models.PositiveIntegerField(default=0, verbose_name='下载次数')
 
     def __str__(self):
         return self.title

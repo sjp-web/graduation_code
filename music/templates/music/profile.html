@@ -58,7 +58,7 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white py-3">
                     <h2 class="h5 mb-0">
-                        <i class="fas fa-music me-2"></i>我的音乐
+                        <i class="fas fa-music me-2"></i>我的音乐（共{{ user_songs|length }}首）
                     </h2>
                 </div>
                 <div class="card-body p-0">
@@ -67,19 +67,31 @@
                         {% for song in user_songs %}
                         <div class="list-group-item p-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">{{ song.title }}</h5>
-                                    <p class="mb-0 text-muted small">
-                                        <i class="fas fa-user me-1"></i>{{ song.artist }}
-                                        <span class="mx-2">|</span>
-                                        <i class="fas fa-compact-disc me-1"></i>{{ song.album }}
-                                        <span class="mx-2">|</span>
-                                        <i class="fas fa-calendar-alt me-1"></i>{{ song.release_date }}
-                                    </p>
+                                <div class="flex-grow-1 me-3">
+                                    <h5 class="mb-1">
+                                        <a href="{% url 'music_detail' song.id %}" class="text-decoration-none">
+                                            {{ song.title }}
+                                        </a>
+                                    </h5>
+                                    <div class="d-flex small text-muted">
+                                        <span class="me-3">
+                                            <i class="fas fa-play me-1"></i>{{ song.play_count }}次播放
+                                        </span>
+                                        <span class="me-3">
+                                            <i class="fas fa-heart me-1"></i>{{ song.likes }}点赞
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-clock me-1"></i>{{ song.release_date|date:"Y-m-d" }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <a href="{{ song.file.url }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-download me-1"></i>下载
-                                </a>
+                                <div class="btn-group">
+                                    <a href="{{ song.audio_file.url }}" 
+                                       class="btn btn-outline-primary btn-sm" 
+                                       download>
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -89,6 +101,35 @@
                         <i class="fas fa-music fa-3x text-muted mb-3"></i>
                         <p class="text-muted mb-0">您还没有上传任何音乐</p>
                     </div>
+                    {% endif %}
+
+                    <!-- 在音乐列表底部添加分页 -->
+                    {% if page_obj.paginator.num_pages > 1 %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                     {% endif %}
                 </div>
             </div>

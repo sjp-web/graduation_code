@@ -61,6 +61,18 @@ class MusicForm(forms.ModelForm):
                 
         return audio_file
 
+    def clean_title(self):
+        title = self.cleaned_data.get('title')
+        if len(title) < 2 or len(title) > 100:
+            raise ValidationError('标题长度需在2-100个字符之间')
+        return title
+
+    def clean_artist(self):
+        artist = self.cleaned_data.get('artist')
+        if len(artist) < 2 or len(artist) > 50:
+            raise ValidationError('艺术家名称需在2-50个字符之间')
+        return artist
+
 # 用户注册表单
 class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(label='电子邮件', help_text='请输入有效的电子邮件地址。')

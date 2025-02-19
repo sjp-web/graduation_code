@@ -8,7 +8,7 @@ from django.contrib.auth import logout
 from django.db.models import Q
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 import json
 from PIL import Image
 from io import BytesIO
@@ -53,6 +53,12 @@ def login_view(request):
 @login_required
 def profile_view(request):
     user_profile = request.user.profile
+    # 修改用户歌曲查询部分
+    user_songs = Music.objects.filter(uploaded_by=request.user).order_by('-release_date')
+    paginator = Paginator(user_songs, 10)  # 每页10条
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
@@ -70,6 +76,7 @@ def profile_view(request):
                     None
                 )
             form.save()
+            messages.success(request, '个人资料已更新！')
             return redirect('profile')
     else:
         form = ProfileForm(instance=user_profile)
@@ -77,6 +84,8 @@ def profile_view(request):
     return render(request, 'music/profile.html', {
         'form': form,
         'user_profile': user_profile,
+        'user_songs': user_songs,  # 添加用户上传歌曲到上下文
+        'page_obj': page_obj
     })
 
 # 音乐列表视图
@@ -120,8 +129,38 @@ def upload_music(request):
 # 音乐详细信息视图
 @login_required
 def music_detail(request, music_id):
-    music = get_object_or_404(Music, id=music_id)
-    return render(request, 'music/music_detail.html', {'music': music})
+    music = get_object_or_404(Music, pk=music_id)
+    # 增加播放计数（每次访问详情页+1）
+    music.play_count += 1
+    music.save(update_fields=['play_count'])
+    
+    comments = music.comments.all()
+
+    if request.method == 'POST':
+        if 'comment_id' in request.POST:
+            comment_id = request.POST.get('comment_id')
+            comment = get_object_or_404(Comment, pk=comment_id)
+            # 添加权限校验
+            if comment.user != request.user and not request.user.is_staff:
+                messages.error(request, '无权删除该评论')
+                return redirect('music_detail', music_id=music.id)
+            comment.delete()
+            messages.success(request, '评论已成功删除。')
+            return redirect('music_detail', music_id=music.id)
+        else:
+            # 添加评论
+            form = CommentForm(request.POST)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.music = music
+                comment.user = request.user
+                comment.save()
+                messages.success(request, '评论已成功发布。')
+                return redirect('music_detail', music_id=music.id)
+    else:
+        form = CommentForm()
+
+    return render(request, 'music/music_detail.html', {'music': music, 'comments': comments, 'form': form})
 
 # 用户创建或编辑个人资料视图
 @login_required
@@ -204,34 +243,6 @@ def search_suggestions(request):
     return JsonResponse({'suggestions': suggestions})
 
 @login_required
-def music_detail(request, music_id):
-    music = get_object_or_404(Music, pk=music_id)
-    comments = music.comments.all()
-
-    if request.method == 'POST':
-        if 'comment_id' in request.POST:
-            # 删除评论
-            comment_id = request.POST.get('comment_id')
-            comment = get_object_or_404(Comment, pk=comment_id, user=request.user)
-            comment.delete()
-            messages.success(request, '评论已成功删除。')
-            return redirect('music_detail', music_id=music.id)
-        else:
-            # 添加评论
-            form = CommentForm(request.POST)
-            if form.is_valid():
-                comment = form.save(commit=False)
-                comment.music = music
-                comment.user = request.user
-                comment.save()
-                messages.success(request, '评论已成功发布。')
-                return redirect('music_detail', music_id=music.id)
-    else:
-        form = CommentForm()
-
-    return render(request, 'music/music_detail.html', {'music': music, 'comments': comments, 'form': form})
-
-@login_required
 def statistics_view(request):
     # 基础统计信息
     stats = {
@@ -241,3 +252,13 @@ def statistics_view(request):
         'categories': Music.objects.values('category').annotate(count=Count('id'))
     }
     return render(request, 'music/statistics.html', {'stats': stats})
+
+# 在profile_view视图中添加下载计数
+@login_required
+def download_music(request, music_id):
+    music = get_object_or_404(Music, pk=music_id)
+    music.download_count += 1
+    music.save(update_fields=['download_count'])
+    response = FileResponse(music.audio_file)
+    response['Content-Disposition'] = f'attachment; filename="{music.audio_file.name}"'
+    return response
