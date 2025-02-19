@@ -161,4 +161,22 @@
     margin: 0;
 }
 </style>
+
+<!-- 添加结构化数据 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MusicRecording",
+  "name": "{{ music.title }}",
+  "byArtist": {
+    "@type": "MusicGroup",
+    "name": "{{ music.artist }}"
+  },
+  "duration": "PT3M30S",
+  "inAlbum": {
+    "@type": "MusicAlbum",
+    "name": "{{ music.album }}"
+  }
+}
+</script>
 {% endblock %}

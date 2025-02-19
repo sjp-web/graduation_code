@@ -14,6 +14,14 @@ class Music(models.Model):
     cover_image = models.ImageField(upload_to='covers/', blank=True, null=True, verbose_name='歌曲封面')
     lyrics = models.TextField(blank=True, null=True, verbose_name='歌词')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='上传者')
+    play_count = models.PositiveIntegerField(default=0, verbose_name='播放量')
+    likes = models.PositiveIntegerField(default=0, verbose_name='点赞数')
+    is_original = models.BooleanField(default=False, verbose_name='是否原创')
+    category = models.CharField(max_length=20, choices=(
+        ('pop', '流行'),
+        ('rock', '摇滚'),
+        ('classical', '古典')
+    ), default='pop', verbose_name='分类')
 
     def __str__(self):
         return self.title

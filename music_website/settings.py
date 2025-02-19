@@ -162,3 +162,8 @@ PAGE_SIZE = 10
 ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac']
 MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20MB
 
+# 保留必要安全设置
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 1209600  # 2周会话有效期
+

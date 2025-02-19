@@ -15,6 +15,8 @@ from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
 from uuid import uuid4
+from django.contrib.auth.models import User
+from django.db.models import Count
 
 # 用户注册视图
 def register(request):
@@ -80,7 +82,10 @@ def profile_view(request):
 # 音乐列表视图
 @login_required
 def music_list(request):
-    music = Music.objects.all()
+    music_list = Music.objects.select_related('uploaded_by').all()
+    paginator = Paginator(music_list, 12)  # 分页显示
+    page = request.GET.get('page')
+    music = paginator.get_page(page)
     return render(request, 'music/music_list.html', {'music': music})
 
 # 上传音乐视图
@@ -225,3 +230,14 @@ def music_detail(request, music_id):
         form = CommentForm()
 
     return render(request, 'music/music_detail.html', {'music': music, 'comments': comments, 'form': form})
+
+@login_required
+def statistics_view(request):
+    # 基础统计信息
+    stats = {
+        'total_songs': Music.objects.count(),
+        'total_users': User.objects.count(),
+        'most_popular': Music.objects.order_by('-play_count').first(),
+        'categories': Music.objects.values('category').annotate(count=Count('id'))
+    }
+    return render(request, 'music/statistics.html', {'stats': stats})
