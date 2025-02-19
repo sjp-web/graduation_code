@@ -39,16 +39,36 @@
                         {% csrf_token %}
                         
                         <div class="row g-4">
+                            <div class="col-12">
+                                <label for="id_cover_image" class="form-label">
+                                    <i class="fas fa-image me-2"></i>
+                                    封面图片
+                                </label>
+                                <div class="file-upload-wrapper">
+                                    {{ form.cover_image|add_class:"form-control form-control-lg" }}
+                                    <div class="form-text">建议尺寸：500x500像素，支持JPG/PNG格式</div>
+                                </div>
+                            </div>
+
                             {% for field in form %}
                             <div class="col-12">
                                 <label for="{{ field.id_for_label }}" class="form-label">
-                                    <i class="fas fa-{% cycle 'heading' 'user' 'compact-disc' 'calendar' 'file-audio' %} me-2"></i>
+                                    <i class="fas 
+                                        {% if field.name == 'lyrics' %}fa-align-left
+                                        {% elif field.name == 'cover_image' %}fa-image
+                                        {% elif field.name == 'title' %}fa-heading
+                                        {% elif field.name == 'artist' %}fa-user
+                                        {% elif field.name == 'album' %}fa-compact-disc
+                                        {% elif field.name == 'release_date' %}fa-calendar
+                                        {% elif field.name == 'audio_file' %}fa-file-audio
+                                        {% endif %} 
+                                        me-2"></i>
                                     {{ field.label }}
                                 </label>
                                 
                                 {% if field.name == 'audio_file' %}
                                 <div class="file-upload-wrapper" id="drop-zone">
-                                    {{ field|add_class:"form-control form-control-lg" }}
+                                    {{ field }}
                                     <div class="form-text">拖放文件至此或点击上传</div>
                                 </div>
                                 <div class="progress mt-2 d-none" id="upload-progress">
@@ -59,6 +79,11 @@
                                          aria-valuemin="0" 
                                          aria-valuemax="100">0%</div>
                                 </div>
+                                {% elif field.name == 'release_date' %}
+                                {{ field }}
+                                {% elif field.name == 'lyrics' %}
+                                {{ field|add_class:"form-control form-control-lg" }}
+                                <div class="form-text">支持直接粘贴歌词文本</div>
                                 {% else %}
                                 {{ field|add_class:"form-control form-control-lg" }}
                                 {% endif %}

@@ -10,6 +10,11 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import sys
+from uuid import uuid4
 
 # 用户注册视图
 def register(request):
@@ -25,22 +30,22 @@ def register(request):
 
 # 用户登录视图
 def login_view(request):
-    if request.user.is_authenticated:  # 检查用户是否已登录
-        return redirect('music_list')  # 如果已登录，则重定向到音乐列表
+    if request.user.is_authenticated:  # 已登录用户直接跳转
+        return redirect('music_list')  
 
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)  # 使用 Django 内置的 AuthenticationForm
+        form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                auth_login(request, user)  # 使用 auth_login 登录用户
-                return redirect('music_list')  # 登录成功后重定向
+                auth_login(request, user)
+                return redirect('music_list')
     else:
-        form = AuthenticationForm()  # GET 请求，显示登录表单
+        form = AuthenticationForm()
 
-    return render(request, 'music/login.html', {'form': form})  # 渲染登录模板
+    return render(request, 'music/login.html', {'form': form})
 
 # 个人资料查看视图
 @login_required
@@ -49,6 +54,19 @@ def profile_view(request):
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
+            # 添加头像处理逻辑
+            if 'avatar' in request.FILES:
+                image = Image.open(request.FILES['avatar'])
+                image.thumbnail((200, 200))
+                output = BytesIO()
+                image.save(output, format='JPEG', quality=85)
+                user_profile.avatar = InMemoryUploadedFile(
+                    output, 'ImageField',
+                    f"{uuid4()}.jpg",
+                    'image/jpeg',
+                    sys.getsizeof(output),
+                    None
+                )
             form.save()
             return redirect('profile')
     else:
@@ -69,15 +87,26 @@ def music_list(request):
 @login_required
 def upload_music(request):
     if request.method == 'POST':
-        form = MusicForm(request.POST, request.FILES)
+        form = MusicForm(request.POST, request.FILES)  # 确保接收文件
         if form.is_valid():
-            music = form.save(commit=False)
-            music.uploaded_by = request.user
-            music.save()
+            instance = form.save(commit=False)
+            instance.uploaded_by = request.user  # 关联上传用户
             
-            # 如果是AJAX请求，返回JSON响应
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success'})
+            # 处理封面图片
+            if 'cover_image' in request.FILES:
+                image = Image.open(request.FILES['cover_image'])
+                image.thumbnail((500, 500))
+                output = BytesIO()
+                image.save(output, format='JPEG', quality=85)
+                instance.cover_image = InMemoryUploadedFile(
+                    output, 'ImageField', 
+                    f"{uuid4()}.jpg",
+                    'image/jpeg',
+                    sys.getsizeof(output),
+                    None
+                )
+            
+            instance.save()
             return redirect('music_list')
     else:
         form = MusicForm()
@@ -110,13 +139,14 @@ def logout_view(request):
     logout(request)  # 注销用户
     return redirect('login')  # 注销后重定向到登录页面
 
+# 音乐搜索视图
 def music_search(request):
     query = request.GET.get('q', '')
     artist = request.GET.get('artist', '')
     album = request.GET.get('album', '')
     year = request.GET.get('year', '')
     
-    # 构建查询条件
+    # 构建搜索查询条件
     music_list = Music.objects.all()
     if query:
         music_list = music_list.filter(
@@ -125,7 +155,7 @@ def music_search(request):
             Q(album__icontains=query)
         )
     
-    # 应用高级筛选
+    # 应用高级筛选条件
     if artist:
         music_list = music_list.filter(artist__icontains=artist)
     if album:
@@ -133,28 +163,22 @@ def music_search(request):
     if year:
         music_list = music_list.filter(release_date__year=year)
     
-    # 分页处理
-    paginator = Paginator(music_list, 10)  # 每页显示10条
+    # 分页处理（每页10条）
+    paginator = Paginator(music_list, 10)  
     page = request.GET.get('page')
     music = paginator.get_page(page)
     
-    # 获取所有年份选项
+    # 获取所有可用年份
     years = Music.objects.dates('release_date', 'year', order='DESC')
     years = [date.year for date in years]
     
-    context = {
+    return render(request, 'music/music_search.html', {
         'music': music,
         'query': query,
-        'filters': {
-            'artist': artist,
-            'album': album,
-            'year': year
-        },
+        'filters': {'artist': artist, 'album': album, 'year': year},
         'years': years,
         'is_paginated': paginator.num_pages > 1
-    }
-    
-    return render(request, 'music/music_search.html', context)
+    })
 
 def search_suggestions(request):
     """处理实时搜索建议的API视图"""

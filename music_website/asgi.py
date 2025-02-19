@@ -1,9 +1,9 @@
 """
-ASGI config for music_website project.
+music_website项目的 ASGI 配置。
 
-It exposes the ASGI callable as a module-level variable named ``application``.
+它将 ASGI 可调用对象公开为名为 'application' 的模块级变量。
 
-For more information on this file, see
+有关此文件的更多信息，请参阅
 https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 

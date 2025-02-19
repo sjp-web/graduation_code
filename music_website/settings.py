@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'music_website.wsgi.application'
 MEDIA_URL = '/media/'
 
 # MEDIA_ROOT 是文件存储的根目录，使用 BASE_DIR 作为基础路径
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 文件存储位置，实际的文件存储路径
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 
 DATABASES = {
@@ -123,11 +123,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'zh-hans'  # 简体中文
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True  # 启用国际化
 
 USE_TZ = True
+
+USE_L10N = False  # 禁用本地化格式
+
+DATE_INPUT_FORMATS = ['%Y-%m-%d']  # 明确指定日期格式
 
 
 # Static files (CSS, JavaScript, Images)
