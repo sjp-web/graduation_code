@@ -29,6 +29,8 @@ class Music(models.Model):
 
     class Meta:
         ordering = ['-release_date']  # 按发行日期倒序排列
+        verbose_name = '音乐作品'
+        verbose_name_plural = '音乐作品管理'
         
     def get_duration(self):
         """获取音频时长（待实现）"""
@@ -65,6 +67,10 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
+    class Meta:
+        verbose_name = '用户资料'
+        verbose_name_plural = '用户资料'
+
 # models.py
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -86,3 +92,20 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'Comment by {self.user.username} on {self.music.title}'
+
+    class Meta:
+        verbose_name = '用户评论'
+        verbose_name_plural = '评论管理'
+
+class AdminLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    action = models.CharField(max_length=200)
+    target = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user} {self.action} {self.target}"
+
+    class Meta:
+        verbose_name = '操作日志'
+        verbose_name_plural = '系统日志'

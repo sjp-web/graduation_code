@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',  # 放在最前面
+    'rangefilter',  # 添加在jazzmin之后
     'django.contrib.admin',        # Admin app
     'django.contrib.auth',         # Authentication framework
     'django.contrib.contenttypes', # Content types framework
@@ -166,4 +168,46 @@ MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20MB
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 2周会话有效期
+
+# Jazzmin配置
+JAZZMIN_SETTINGS = {
+    # 基础配置
+    "site_title": "音乐管理系统",
+    "site_header": "音乐管理后台",
+    "site_brand": "音乐管理平台",
+    "welcome_sign": "欢迎进入音乐管理后台",
+    
+    # 语言相关
+    "language_chooser": False,  # 关闭语言选择器
+    "show_ui_builder": False,   # 关闭UI配置器
+    
+    # 侧边栏配置
+    "navigation_expanded": True,
+    "icons": {
+        "auth.user": "fas fa-user-cog",
+        "auth.Group": "fas fa-users-cog",
+        "music.Music": "fas fa-music",
+        "music.Comment": "fas fa-comment-dots",
+        "music.Profile": "fas fa-id-card",
+        "music.AdminLog": "fas fa-clipboard-list",
+    },
+    "order_with_respect_to": [
+        "music", 
+        "auth",
+    ],
+    
+    # 自定义菜单项（可选）
+    "custom_links": {
+        "music": [{
+            "name": "数据看板",
+            "url": "/admin/dashboard/",
+            "icon": "fas fa-chart-line",
+        }]
+    }
+}
+
+# 确保语言设置正确
+LANGUAGE_CODE = 'zh-hans'
+USE_I18N = True
+USE_L10N = True
 
