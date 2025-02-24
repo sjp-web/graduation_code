@@ -17,6 +17,11 @@ import sys
 from uuid import uuid4
 from django.contrib.auth.models import User
 from django.db.models import Count
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
+from datetime import timedelta
+from django.core.files.base import ContentFile
+from .utils.media_handlers import optimize_upload
 
 # 用户注册视图
 def register(request):
@@ -64,17 +69,13 @@ def profile_view(request):
         if form.is_valid():
             # 添加头像处理逻辑
             if 'avatar' in request.FILES:
-                image = Image.open(request.FILES['avatar'])
-                image.thumbnail((200, 200))
-                output = BytesIO()
-                image.save(output, format='JPEG', quality=85)
-                user_profile.avatar = InMemoryUploadedFile(
-                    output, 'ImageField',
-                    f"{uuid4()}.jpg",
-                    'image/jpeg',
-                    sys.getsizeof(output),
-                    None
-                )
+                optimized = optimize_upload(request.FILES['avatar'], max_size=(500, 500))
+                if optimized:
+                    user_profile.avatar.save(
+                        f"{uuid4()}.jpg", 
+                        ContentFile(optimized.getvalue()),
+                        save=False
+                    )
             form.save()
             messages.success(request, '个人资料已更新！')
             return redirect('profile')
@@ -108,17 +109,13 @@ def upload_music(request):
             
             # 处理封面图片
             if 'cover_image' in request.FILES:
-                image = Image.open(request.FILES['cover_image'])
-                image.thumbnail((500, 500))
-                output = BytesIO()
-                image.save(output, format='JPEG', quality=85)
-                instance.cover_image = InMemoryUploadedFile(
-                    output, 'ImageField', 
-                    f"{uuid4()}.jpg",
-                    'image/jpeg',
-                    sys.getsizeof(output),
-                    None
-                )
+                optimized = optimize_upload(request.FILES['cover_image'])
+                if optimized:
+                    instance.cover_image.save(
+                        f"{uuid4()}.jpg",
+                        ContentFile(optimized.getvalue()),
+                        save=False
+                    )
             
             instance.save()
             return redirect('music_list')
@@ -262,3 +259,14 @@ def download_music(request, music_id):
     response = FileResponse(music.audio_file)
     response['Content-Disposition'] = f'attachment; filename="{music.audio_file.name}"'
     return response
+
+@staff_member_required
+def admin_dashboard(request):
+    # 示例数据统计
+    stats = {
+        'total_users': User.objects.count(),
+        'new_this_week': User.objects.filter(date_joined__gte=timezone.now()-timedelta(days=7)).count(),
+        'songs_count': Music.objects.count(),  # 假设你有Song模型
+        'popular_songs': Music.objects.order_by('-play_count')[:5]
+    }
+    return render(request, 'music/dashboard.html', {'stats': stats})

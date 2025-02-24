@@ -20,9 +20,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from music.admin import admin_site  # 确保导入自定义admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # 管理后台 URL
+    path('admin/', admin_site.urls),  # 使用自定义admin后台
     path('accounts/', include('music.urls')),  # 引入音乐应用的 URL 配置
 ]
 

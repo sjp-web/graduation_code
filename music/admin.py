@@ -64,9 +64,7 @@ class MusicAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
     def get_list_display(self, request):
-        return [('title', '歌曲名称'), 
-                ('artist', '艺术家'),
-                ('category', '分类')]
+        return ['title', 'artist', 'category', 'play_count', 'download_count', 'cover_preview', 'upload_status']
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
@@ -148,6 +146,31 @@ class CustomAdminSite(admin.AdminSite):
         ]
         return custom_urls + urls
 
+    # 添加Jazzmin需要的菜单配置
+    def get_app_list(self, request):
+        app_list = super().get_app_list(request)
+        app_list += [
+            {
+                'name': '数据看板',
+                'app_label': 'custom_dashboard',
+                'models': [
+                    {
+                        'name': '仪表盘',
+                        'object_name': 'dashboard',
+                        'admin_url': self.reverse('admin_dashboard'),
+                        'view_only': True,
+                        'permissions': ['auth.view_user']
+                    }
+                ],
+                'icon': 'fas fa-chart-line',
+                'app_url': self.reverse('admin_dashboard')
+            }
+        ]
+        return app_list
+
+    def reverse(self, view_name):
+        return f'/admin/{view_name}/'
+
 @staff_member_required
 def admin_dashboard(request):
     stats = {
@@ -157,4 +180,11 @@ def admin_dashboard(request):
         'popular_music': Music.objects.order_by('-play_count')[:5],
         'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
     }
-    return render(request, 'admin/dashboard.html', {'stats': stats})
+    return render(request, 'music/dashboard.html', {'stats': stats})
+
+admin_site = CustomAdminSite(name='custom_admin')
+admin_site.register(Music, MusicAdmin)
+admin_site.register(Comment, CommentAdmin)
+admin_site.register(Profile, ProfileAdmin)
+admin_site.register(AdminLog, AdminLogAdmin)
+admin_site.register(LogEntry, LogEntryAdmin)

@@ -11,7 +11,13 @@ class Music(models.Model):
     album = models.CharField(max_length=100, verbose_name='专辑')
     release_date = models.DateField(verbose_name='发行日期')
     audio_file = models.FileField(upload_to='music/', verbose_name='音频文件')
-    cover_image = models.ImageField(upload_to='covers/', blank=True, null=True, verbose_name='歌曲封面')
+    cover_image = models.ImageField(
+        upload_to='covers/%Y/%m/%d/',  # 添加日期路径
+        blank=True, 
+        null=True,
+        verbose_name='歌曲封面',
+        help_text='建议尺寸：500x500像素，支持JPG/PNG格式'
+    )
     lyrics = models.TextField(blank=True, null=True, verbose_name='歌词')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='上传者')
     play_count = models.PositiveIntegerField(default=0, verbose_name='播放量')
@@ -54,8 +60,14 @@ class Profile(models.Model):
         upload_to='avatars/%Y/%m/%d/',
         default='avatars/default.png',
         blank=True,
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
-        verbose_name='头像'
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=['jpg', 'jpeg', 'png'],
+                message="仅支持JPG/PNG格式图片"
+            )
+        ],
+        verbose_name='头像',
+        crop=['middle', 'center']  # 添加居中裁剪
     )
     location = models.CharField(
         max_length=100,

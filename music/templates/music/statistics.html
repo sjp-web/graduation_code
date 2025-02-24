@@ -1,0 +1,80 @@
+{% extends 'music/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}数据统计 - 音乐网站{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>数据统计</h2>
+    
+    <div class="row g-4">
+        <!-- 基础统计 -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>基础统计</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            总歌曲数
+                            <span class="badge bg-primary rounded-pill">{{ stats.total_songs }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            总用户数
+                            <span class="badge bg-success rounded-pill">{{ stats.total_users }}</span>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>最受欢迎歌曲</div>
+                                <div class="text-end">
+                                    {% if stats.most_popular %}
+                                    <div class="fw-bold">{{ stats.most_popular.title }}</div>
+                                    <small class="text-muted">播放: {{ stats.most_popular.play_count }}</small>
+                                    {% else %}
+                                    <span class="text-muted">暂无数据</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分类统计 -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-tags me-2"></i>分类统计</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">分类</th>
+                                    <th scope="col" class="text-end">歌曲数量</th>
+                                    <th scope="col" class="text-end">占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in stats.categories %}
+                                <tr>
+                                    <td>{{ category.category|default:"未分类" }}</td>
+                                    <td class="text-end">{{ category.count }}</td>
+                                    <td class="text-end">
+                                        {{ category.count|percentage:stats.total_songs }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
