@@ -20,10 +20,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from music.admin import admin_site  # 确保导入自定义admin_site
+from music.admin import admin_site, admin_dashboard  # 确保导入自定义admin_site和admin_dashboard
 
 urlpatterns = [
     path('admin/', admin_site.urls),  # 使用自定义admin后台
+    path('admin/dashboard/', admin_site.admin_view(admin_dashboard), name='admin_dashboard'),  # 添加这行
     path('accounts/', include('music.urls')),  # 引入音乐应用的 URL 配置
 ]
 

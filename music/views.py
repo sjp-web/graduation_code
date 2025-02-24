@@ -262,11 +262,12 @@ def download_music(request, music_id):
 
 @staff_member_required
 def admin_dashboard(request):
-    # 示例数据统计
+    # 保持原有视图逻辑不变
     stats = {
         'total_users': User.objects.count(),
-        'new_this_week': User.objects.filter(date_joined__gte=timezone.now()-timedelta(days=7)).count(),
-        'songs_count': Music.objects.count(),  # 假设你有Song模型
-        'popular_songs': Music.objects.order_by('-play_count')[:5]
+        'total_music': Music.objects.count(),
+        'new_users': User.objects.filter(date_joined__date=timezone.now().date()).count(),
+        'popular_music': Music.objects.order_by('-play_count')[:5],
+        'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
     }
     return render(request, 'music/dashboard.html', {'stats': stats})

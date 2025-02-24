@@ -157,19 +157,14 @@ class CustomAdminSite(admin.AdminSite):
                     {
                         'name': '仪表盘',
                         'object_name': 'dashboard',
-                        'admin_url': self.reverse('admin_dashboard'),
+                        'admin_url': '/admin/dashboard/',
                         'view_only': True,
-                        'permissions': ['auth.view_user']
                     }
                 ],
                 'icon': 'fas fa-chart-line',
-                'app_url': self.reverse('admin_dashboard')
             }
         ]
         return app_list
-
-    def reverse(self, view_name):
-        return f'/admin/{view_name}/'
 
 @staff_member_required
 def admin_dashboard(request):
