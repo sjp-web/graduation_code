@@ -92,8 +92,9 @@ def profile_view(request):
 # 音乐列表视图
 @login_required
 def music_list(request):
-    music_list = Music.objects.select_related('uploaded_by').all()
-    paginator = Paginator(music_list, 12)  # 分页显示
+    # 过滤掉没有音频文件的记录
+    music_list = Music.objects.exclude(audio_file='').select_related('uploaded_by').all()
+    paginator = Paginator(music_list, 12)
     page = request.GET.get('page')
     music = paginator.get_page(page)
     return render(request, 'music/music_list.html', {'music': music})

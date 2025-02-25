@@ -4,13 +4,20 @@ from django.dispatch import receiver
 from django.db import models
 from django_resized import ResizedImageField
 from django.core.validators import FileExtensionValidator
+import uuid
+import os
+
+def audio_upload_path(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('music', filename)
 
 class Music(models.Model):
     title = models.CharField(max_length=200, verbose_name='标题') # 标题
     artist = models.CharField(max_length=100, verbose_name='艺术家')
     album = models.CharField(max_length=100, verbose_name='专辑')
     release_date = models.DateField(verbose_name='发行日期')
-    audio_file = models.FileField(upload_to='music/', verbose_name='音频文件')
+    audio_file = models.FileField(upload_to=audio_upload_path, verbose_name='音频文件')
     cover_image = models.ImageField(
         upload_to='covers/%Y/%m/%d/',  # 添加日期路径
         blank=True, 
@@ -49,6 +56,12 @@ class Music(models.Model):
             return self.audio_file.size
         except:
             return 0
+
+    def audio_file_exists(self):
+        return self.audio_file.storage.exists(self.audio_file.name) if self.audio_file else False
+
+    def cover_image_exists(self):
+        return self.cover_image.storage.exists(self.cover_image.name) if self.cover_image else False
 
 class Profile(models.Model):
     """用户扩展资料"""
