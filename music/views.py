@@ -16,12 +16,13 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
 from uuid import uuid4
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Sum, Avg, F
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils import timezone
 from datetime import timedelta
 from django.core.files.base import ContentFile
 from .utils.media_handlers import optimize_upload
+from django.contrib.admin import site as admin_site
 
 # 用户注册视图
 def register(request):
@@ -37,22 +38,16 @@ def register(request):
 
 # 用户登录视图
 def login_view(request):
-    if request.user.is_authenticated:  # 已登录用户直接跳转
-        return redirect('music_list')  
-
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                auth_login(request, user)
-                return redirect('music_list')
-    else:
-        form = AuthenticationForm()
-
-    return render(request, 'music/login.html', {'form': form})
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)
+            return redirect('music_list')
+        else:
+            messages.error(request, '用户名或密码错误')
+    return render(request, 'music/login.html')
 
 # 个人资料查看视图
 @login_required
@@ -92,12 +87,8 @@ def profile_view(request):
 # 音乐列表视图
 @login_required
 def music_list(request):
-    # 过滤掉没有音频文件的记录
-    music_list = Music.objects.exclude(audio_file='').select_related('uploaded_by').all()
-    paginator = Paginator(music_list, 12)
-    page = request.GET.get('page')
-    music = paginator.get_page(page)
-    return render(request, 'music/music_list.html', {'music': music})
+    music_list = Music.objects.all().order_by('-release_date')
+    return render(request, 'music/music_list.html', {'music': music_list})
 
 # 上传音乐视图
 @login_required
@@ -254,12 +245,25 @@ def search_suggestions(request):
 
 @login_required
 def statistics_view(request):
-    # 基础统计信息
+    # 修改分类统计查询
+    categories = Music.objects.values('category').annotate(
+        count=Count('id'),
+        name=F('category')  # 直接使用F表达式获取分类名称
+    ).order_by('-count')
+    
     stats = {
-        'total_songs': Music.objects.count(),
-        'total_users': User.objects.count(),
-        'most_popular': Music.objects.order_by('-play_count').first(),
-        'categories': Music.objects.values('category').annotate(count=Count('id'))
+        'categories': list(categories),  # 转换为列表以便模板处理
+        'user_stats': {
+            'upload_count': Music.objects.filter(uploaded_by=request.user).count(),
+            'total_plays': Music.objects.filter(uploaded_by=request.user).aggregate(Sum('play_count'))['play_count__sum'] or 0,
+            'total_downloads': Music.objects.filter(uploaded_by=request.user).aggregate(Sum('download_count'))['download_count__sum'] or 0,
+            'recent_uploads': Music.objects.filter(uploaded_by=request.user).order_by('-release_date')[:5]
+        },
+        'global_stats': {
+            'total_users': User.objects.count(),
+            'total_music': Music.objects.count(),
+            'popular_categories': Music.objects.values('category').annotate(count=Count('id')).order_by('-count')[:3]
+        }
     }
     return render(request, 'music/statistics.html', {'stats': stats})
 
@@ -275,7 +279,6 @@ def download_music(request, music_id):
 
 @staff_member_required
 def admin_dashboard(request):
-    # 保持原有视图逻辑不变
     stats = {
         'total_users': User.objects.count(),
         'total_music': Music.objects.count(),
@@ -283,4 +286,8 @@ def admin_dashboard(request):
         'popular_music': Music.objects.order_by('-play_count')[:5],
         'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
     }
-    return render(request, 'music/dashboard.html', {'stats': stats})
+    # 添加使用admin模板的上下文
+    return render(request, 'admin/dashboard.html', {
+        'stats': stats,
+        **admin_site.each_context(request)  # 添加管理后台的上下文变量
+    })

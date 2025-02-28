@@ -9,8 +9,9 @@ from rangefilter.filters import DateRangeFilter
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.urls import path
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.utils import timezone
+from . import views
 
 # 音乐资源定义（用于导入导出）
 class MusicResource(resources.ModelResource):
@@ -139,35 +140,35 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 # 自定义管理仪表板
 class CustomAdminSite(admin.AdminSite):
+    name = 'music_admin'
+    site_header = '音乐管理后台'
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('dashboard/', self.admin_view(admin_dashboard), name='admin_dashboard'),
+            path('dashboard/', self.admin_view(views.admin_dashboard), name='dashboard')
         ]
         return custom_urls + urls
 
-    # 添加Jazzmin需要的菜单配置
     def get_app_list(self, request):
         app_list = super().get_app_list(request)
-        app_list += [
-            {
-                'name': '数据看板',
-                'app_label': 'custom_dashboard',
-                'models': [
-                    {
-                        'name': '仪表盘',
-                        'object_name': 'dashboard',
-                        'admin_url': '/admin/dashboard/',
-                        'view_only': True,
-                    }
-                ],
-                'icon': 'fas fa-chart-line',
-            }
-        ]
+        # 将仪表盘作为独立应用显示
+        app_list.insert(0, {
+            'name': '数据看板',
+            'app_label': 'dashboard',
+            'models': [{
+                'name': '系统概览',
+                'object_name': 'dashboard',
+                'admin_url': '/admin/dashboard/',
+                'view_only': True,
+            }],
+            'icon': 'fas fa-chart-line',
+        })
         return app_list
 
 @staff_member_required
 def admin_dashboard(request):
+    # 管理后台数据逻辑
     stats = {
         'total_users': User.objects.count(),
         'total_music': Music.objects.count(),
@@ -175,9 +176,12 @@ def admin_dashboard(request):
         'popular_music': Music.objects.order_by('-play_count')[:5],
         'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
     }
-    return render(request, 'music/dashboard.html', {'stats': stats})
+    return render(request, 'admin/dashboard.html', {'stats': stats})  # 管理后台模板
 
-admin_site = CustomAdminSite(name='custom_admin')
+# 注册Django默认的User和Group模型
+admin_site = CustomAdminSite(name='music_admin')
+admin_site.register(User)
+admin_site.register(Group)
 admin_site.register(Music, MusicAdmin)
 admin_site.register(Comment, CommentAdmin)
 admin_site.register(Profile, ProfileAdmin)

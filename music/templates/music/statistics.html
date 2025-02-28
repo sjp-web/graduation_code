@@ -9,72 +9,203 @@
     <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>数据统计</h2>
     
     <div class="row g-4">
-        <!-- 基础统计 -->
-        <div class="col-lg-4">
+        <!-- 个人数据 -->
+        <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>基础统计</h5>
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>我的数据</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            总歌曲数
-                            <span class="badge bg-primary rounded-pill">{{ stats.total_songs }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            总用户数
-                            <span class="badge bg-success rounded-pill">{{ stats.total_users }}</span>
-                        </li>
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>最受欢迎歌曲</div>
-                                <div class="text-end">
-                                    {% if stats.most_popular %}
-                                    <div class="fw-bold">{{ stats.most_popular.title }}</div>
-                                    <small class="text-muted">播放: {{ stats.most_popular.play_count }}</small>
-                                    {% else %}
-                                    <span class="text-muted">暂无数据</span>
-                                    {% endif %}
-                                </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-item text-center mb-4">
+                                <div class="display-5 fw-bold">{{ stats.user_stats.upload_count }}</div>
+                                <small class="text-muted">上传歌曲数</small>
                             </div>
-                        </li>
-                    </ul>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item text-center mb-4">
+                                <div class="display-5 fw-bold">{{ stats.user_stats.total_plays }}</div>
+                                <small class="text-muted">总播放量</small>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-3"><i class="fas fa-history me-2"></i>最近上传</h6>
+                    <div class="list-group">
+                        {% for music in stats.user_stats.recent_uploads %}
+                        <a href="{% url 'music_detail' music.id %}" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between">
+                            <span>{{ music.title }}</span>
+                            <small class="text-muted">{{ music.release_date|date:"Y-m-d" }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 分类统计 -->
-        <div class="col-lg-8">
+        <!-- 全局数据 -->
+        <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-tags me-2"></i>分类统计</h5>
+                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>全站数据</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col">分类</th>
-                                    <th scope="col" class="text-end">歌曲数量</th>
-                                    <th scope="col" class="text-end">占比</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for category in stats.categories %}
-                                <tr>
-                                    <td>{{ category.category|default:"未分类" }}</td>
-                                    <td class="text-end">{{ category.count }}</td>
-                                    <td class="text-end">
-                                        {{ category.count|percentage:stats.total_songs }}%
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="display-5 fw-bold">{{ stats.global_stats.total_users }}</div>
+                                <small class="text-muted">注册用户</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="display-5 fw-bold">{{ stats.global_stats.total_music }}</div>
+                                <small class="text-muted">总歌曲数</small>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>热门分类</h6>
+                    <div class="list-group">
+                        {% for cat in stats.global_stats.popular_categories %}
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>{{ cat.category|default:"未分类" }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ cat.count }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 在现有基础上增加可视化图表 -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>音乐分类分布</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>下载量趋势</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="downloadsChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 在现有图表后添加趋势图 -->
+    <div class="row mt-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>每日新增用户趋势</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userTrendChart" style="height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- 添加Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 分类饼图
+new Chart(document.getElementById('categoryChart'), {
+    type: 'pie',
+    data: {
+        labels: {{ stats.categories|map_attribute:'category'|safe }},
+        datasets: [{
+            data: {{ stats.categories|map_attribute:'count'|safe }},
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc',
+                '#f6c23e', '#e74a3b', '#858796'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    padding: 20
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const value = context.raw || 0;
+                        const percentage = ((value * 100) / total).toFixed(1) + '%';
+                        return `${context.label}: ${value} (${percentage})`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// 下载量柱状图 
+new Chart(document.getElementById('downloadsChart'), {
+    type: 'bar',
+    data: {
+        labels: ['总下载量', '平均下载量'],
+        datasets: [{
+            label: '下载统计',
+            data: [
+                {{ stats.downloads_trend.total_downloads|default:0 }},
+                {{ stats.downloads_trend.avg_downloads|default:0|floatformat:1 }}
+            ],
+            backgroundColor: ['#3a3ab7','#5a5ac9']
+        }]
+    }
+});
+
+// 用户趋势折线图
+new Chart(document.getElementById('userTrendChart'), {
+    type: 'line',
+    data: {
+        labels: {{ stats.daily_users.labels|safe }},
+        datasets: [{
+            label: '新增用户数',
+            data: {{ stats.daily_users.data|safe }},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            tooltip: {
+                mode: 'index',
+                intersect: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '用户数量'
+                }
+            }
+        }
+    }
+});
+</script>
 {% endblock %} 

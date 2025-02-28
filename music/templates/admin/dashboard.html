@@ -1,0 +1,92 @@
+{% extends "admin/base_site.html" %}
+{% load jazzmin %}
+{% load static %}
+
+{% block content_title %}
+<div class="content-header mb-4">
+    <h1 class="text-primary mb-0">
+        <i class="fas fa-tachometer-alt me-2"></i>系统概览
+        <small class="text-muted fs-6">实时数据监控</small>
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="col-12">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-transparent border-bottom">
+            <h3 class="card-title mb-0">
+                <i class="fas fa-chart-pie me-2 text-primary"></i>
+                核心指标
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-info">
+                            <i class="fas fa-users"></i>
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">总用户数</span>
+                            <span class="info-box-number">{{ stats.total_users }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-success">
+                            <i class="fas fa-music"></i>
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">总音乐数</span>
+                            <span class="info-box-number">{{ stats.total_music }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加服务器状态监控 -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-server me-2"></i>服务器状态</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value">85%</div>
+                    <div class="metric-label">CPU使用率</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value">2.4GB/4GB</div>
+                    <div class="metric-label">内存使用</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs-container mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-light p-3 rounded-2 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{% url 'admin:index' %}" class="text-decoration-none">
+                    <i class="fas fa-home fa-sm text-muted"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-chart-line fa-sm text-primary me-1"></i>
+                数据看板
+            </li>
+        </ol>
+    </nav>
+</div>
+{% endblock %} 

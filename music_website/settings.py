@@ -48,7 +48,6 @@ LOGIN_URL = '/accounts/login/'  # 设置自定义登录路径
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -61,8 +60,8 @@ ROOT_URLCONF = 'music_website.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # 如果没有额外的模板路径，保持为空
-        'APP_DIRS': True,  # 确保设置为 True，这样 Django 会自动在每个应用程序的 templates 目录中查找模板
+        'DIRS': [],
+        'APP_DIRS': True,  # 必须为True
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -84,7 +83,7 @@ WSGI_APPLICATION = 'music_website.wsgi.application'
 MEDIA_URL = '/media/'
 
 # MEDIA_ROOT 是文件存储的根目录，使用 BASE_DIR 作为基础路径
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 DATABASES = {
@@ -142,9 +141,8 @@ DATE_INPUT_FORMATS = ['%Y-%m-%d']  # 明确指定日期格式
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'music/static'),
-]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'music/static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 生产环境收集静态文件用
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -200,8 +198,9 @@ JAZZMIN_SETTINGS = {
     "custom_links": {
         "music": [{
             "name": "数据看板",
-            "url": "/admin/dashboard/",
+            "url": "music_admin:dashboard",  # 匹配自定义命名空间
             "icon": "fas fa-chart-line",
+            "permissions": ["auth.view_user"]
         }]
     }
 }

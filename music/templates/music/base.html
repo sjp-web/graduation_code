@@ -49,6 +49,13 @@
                             <i class="fas fa-chart-bar"></i> 数据统计
                         </a>
                     </li>
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}">
+                            <i class="fas fa-tachometer-alt"></i> 管理后台
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
@@ -66,14 +73,6 @@
                             </a></li>
                         </ul>
                     </li>
-                    {% if user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" 
-                           href="{% url 'admin_dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i> 仪表盘
-                        </a>
-                    </li>
-                    {% endif %}
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'register' %}">

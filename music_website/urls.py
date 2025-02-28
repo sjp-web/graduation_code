@@ -20,14 +20,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from music.admin import admin_site, admin_dashboard  # 确保导入自定义admin_site和admin_dashboard
+from music.admin import admin_site  # 仅导入admin_site
+from music.views import statistics_view  # 仅导入statistics_view
 
 urlpatterns = [
-    path('admin/', admin_site.urls),  # 使用自定义admin后台
-    path('admin/dashboard/', admin_site.admin_view(admin_dashboard), name='admin_dashboard'),  # 添加这行
-    path('accounts/', include('music.urls')),  # 引入音乐应用的 URL 配置
-]
-
-# 配置媒体文件的 URL
-if settings.DEBUG:  # 仅在开发模式下
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('admin/', admin.site.urls),  # 默认admin（可选保留）
+    path('music-admin/', admin_site.urls),  # 自定义管理后台
+    path('', include('music.urls')),  # 确保主路径指向music应用
+    path('accounts/', include('django.contrib.auth.urls')),  # 添加认证系统
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

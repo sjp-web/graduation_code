@@ -17,3 +17,13 @@ def percentage(value, total):
         return "%.1f" % ((float(value) / float(total)) * 100)
     except (ValueError, ZeroDivisionError):
         return 0
+
+@register.filter
+def map_attribute(value, arg):
+    """从字典列表或对象列表中提取指定属性"""
+    if isinstance(value, list) and value:
+        if isinstance(value[0], dict):
+            return [item.get(arg) for item in value]
+        else:
+            return [getattr(item, arg) for item in value]
+    return []

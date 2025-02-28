@@ -1,0 +1,57 @@
+/* 面包屑导航样式优化 */
+.breadcrumb {
+    --bs-breadcrumb-divider: '›';
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+}
+
+.breadcrumb-item {
+    transition: all 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: #adb5bd;
+    font-size: 1.1em;
+    vertical-align: middle;
+    padding: 0 0.5rem;
+}
+
+/* 内容标题优化 */
+.content-header {
+    padding: 1.5rem 1rem 0;
+    margin-bottom: 1.5rem;
+}
+
+.content-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.content-header small {
+    font-size: 0.9em;
+    margin-left: 0.75rem;
+    position: relative;
+    top: -2px;
+}
+
+/* 卡片标题优化 */
+.card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.card-header i {
+    width: 1.5em;
+    text-align: center;
+} 
