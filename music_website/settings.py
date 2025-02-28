@@ -91,8 +91,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'music_website',
-        'USER': 'root',
-        'PASSWORD': '123456',
+        'USER': 'shengjieping',
+        'PASSWORD': 'sheng5016',
         'HOST': 'localhost',   # 如有必要可替换为你的数据库主机
         'PORT': '3306',        # MySQL 默认端口
         'OPTIONS': {

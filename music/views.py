@@ -158,7 +158,19 @@ def music_detail(request, music_id):
     else:
         form = CommentForm()
 
-    return render(request, 'music/music_detail.html', {'music': music, 'comments': comments, 'form': form})
+    # 修正后的歌词处理逻辑
+    lyrics_lines = []
+    if music.lyrics:
+        # 使用splitlines()替代split('\n')以更好处理不同换行符
+        # 保留空行而不是过滤掉
+        lyrics_lines = [line.rstrip() for line in music.lyrics.splitlines()]
+    
+    return render(request, 'music/music_detail.html', {
+        'music': music,
+        'comments': comments,
+        'form': form,
+        'lyrics_lines': lyrics_lines
+    })
 
 # 用户创建或编辑个人资料视图
 @login_required
