@@ -51,7 +51,7 @@
                     <div class="alert alert-info mt-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>当前已登录为：{{ user.username }}</span>
-                            <form action="{% url 'logout' %}" method="post" id="logout-form">
+                            <form action="{% url 'logout' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{% url 'login' %}">
                                 <button type="submit" class="btn btn-danger btn-sm">

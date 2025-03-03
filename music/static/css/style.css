@@ -134,19 +134,39 @@ audio::-webkit-media-controls-panel {
 
 /* 响应式调整 */
 @media (max-width: 768px) {
+    .navbar-nav {
+        padding-top: 1rem;
+    }
+    
     .card-title {
         font-size: 1.1rem;
     }
     
-    .input-group-lg > .form-control {
-        font-size: 1rem;
+    .audio-player {
+        width: 100%;
     }
     
-    .file-upload-wrapper {
-        padding: 1rem;
+    .dropdown-menu {
+        position: static;
+        float: none;
     }
     
-    audio {
-        height: 36px;
+    .list-group-item {
+        padding: 1rem 0.5rem;
     }
+}
+
+/* 添加加载动画 */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
 }

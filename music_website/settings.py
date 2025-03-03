@@ -229,3 +229,8 @@ if DEBUG:
         },
     }
 
+# 添加会话安全设置
+SESSION_COOKIE_SECURE = False  # 开发时设为False，生产环境应设为True
+CSRF_COOKIE_SECURE = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+

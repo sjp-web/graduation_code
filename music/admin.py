@@ -113,22 +113,25 @@ class AdminLogAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'user', 'action_type', 'target_info')
     list_filter = ('action', ('timestamp', DateRangeFilter))
     search_fields = ('user__username', 'action', 'target')
+    date_hierarchy = 'timestamp'
     
     def action_type(self, obj):
-        color = {
+        color_map = {
             'create': 'success',
             'update': 'warning',
             'delete': 'danger'
-        }.get(obj.action.lower(), 'primary')
+        }
+        color = color_map.get(obj.action.lower(), 'primary')
         return format_html(
             '<span class="badge bg-{}">{}</span>',
             color,
-            obj.action
+            obj.action.capitalize()
         )
     action_type.short_description = '操作类型'
+    action_type.admin_order_field = 'action'
 
     def target_info(self, obj):
-        return format_html('<code>{}</code>', obj.target)
+        return format_html('<code>{}</code>', obj.target[:50])
     target_info.short_description = '操作目标'
 
 @admin.register(LogEntry)
