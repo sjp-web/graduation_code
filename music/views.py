@@ -23,6 +23,7 @@ from datetime import timedelta
 from django.core.files.base import ContentFile
 from .utils.media_handlers import optimize_upload
 from django.contrib.admin import site as admin_site
+from django.views.decorators.http import require_POST
 
 # 用户注册视图
 def register(request):
@@ -38,6 +39,7 @@ def register(request):
 
 # 用户登录视图
 def login_view(request):
+    form = AuthenticationForm()  # 初始化空表单
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -47,7 +49,7 @@ def login_view(request):
             return redirect('music_list')
         else:
             messages.error(request, '用户名或密码错误')
-    return render(request, 'music/login.html')
+    return render(request, 'music/login.html', {'form': form})  # 确保传递表单
 
 # 个人资料查看视图
 @login_required
@@ -178,12 +180,6 @@ def create_profile(request):
 
     return render(request, 'music/create_profile.html', {'form': form})  # 渲染表单页面
 
-# 用户注销视图
-@login_required
-def logout_view(request):
-    logout(request)  # 注销用户
-    return redirect('login')  # 注销后重定向到登录页面
-
 # 音乐搜索视图
 def music_search(request):
     query = request.GET.get('q', '')
@@ -291,3 +287,7 @@ def admin_dashboard(request):
         'stats': stats,
         **admin_site.each_context(request)  # 添加管理后台的上下文变量
     })
+
+def custom_logout(request):
+    # 如果有自定义注销逻辑可能会覆盖设置
+    pass

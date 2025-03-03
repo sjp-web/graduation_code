@@ -24,8 +24,8 @@ from music.admin import admin_site  # 仅导入admin_site
 from music.views import statistics_view  # 仅导入statistics_view
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # 默认admin（可选保留）
-    path('music-admin/', admin_site.urls),  # 自定义管理后台
+    path('music-admin/', admin_site.urls),  # 自定义后台
+    path('admin/', admin.site.urls),        # 默认后台（可选）
     path('', include('music.urls')),  # 确保主路径指向music应用
-    path('accounts/', include('django.contrib.auth.urls')),  # 添加认证系统
+    path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='auth')),  # 添加认证系统
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

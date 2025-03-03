@@ -151,24 +151,32 @@ class CustomAdminSite(admin.AdminSite):
         return custom_urls + urls
 
     def get_app_list(self, request):
+        # 获取原始应用列表
         app_list = super().get_app_list(request)
-        # 将仪表盘作为独立应用显示
-        app_list.insert(0, {
+        
+        # 添加自定义看板应用
+        dashboard_app = {
             'name': '数据看板',
             'app_label': 'dashboard',
+            'app_url': self._get_admin_url('dashboard'),
+            'has_module_perms': True,
             'models': [{
                 'name': '系统概览',
                 'object_name': 'dashboard',
-                'admin_url': '/admin/dashboard/',
+                'admin_url': self._get_admin_url('dashboard'),
                 'view_only': True,
             }],
-            'icon': 'fas fa-chart-line',
-        })
-        return app_list
+        }
+        
+        # 将看板插入到应用列表最前面
+        return [dashboard_app] + app_list
+
+    def _get_admin_url(self, name):
+        return f'/{self.name}/{name}/'
 
 @staff_member_required
 def admin_dashboard(request):
-    # 管理后台数据逻辑
+    current_site = admin_site if 'music_admin' in request.path else admin.site
     stats = {
         'total_users': User.objects.count(),
         'total_music': Music.objects.count(),
@@ -176,14 +184,12 @@ def admin_dashboard(request):
         'popular_music': Music.objects.order_by('-play_count')[:5],
         'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
     }
-    return render(request, 'admin/dashboard.html', {'stats': stats})  # 管理后台模板
+    return render(request, 'admin/dashboard.html', {
+        **current_site.each_context(request),
+        'stats': stats,
+        'title': '系统概览',
+        'opts': current_site._registry[Music].model._meta
+    })
 
 # 注册Django默认的User和Group模型
 admin_site = CustomAdminSite(name='music_admin')
-admin_site.register(User)
-admin_site.register(Group)
-admin_site.register(Music, MusicAdmin)
-admin_site.register(Comment, CommentAdmin)
-admin_site.register(Profile, ProfileAdmin)
-admin_site.register(AdminLog, AdminLogAdmin)
-admin_site.register(LogEntry, LogEntryAdmin)

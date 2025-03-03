@@ -44,6 +44,8 @@ INSTALLED_APPS = [
 
 # 这里添加 LOGIN_URL
 LOGIN_URL = '/accounts/login/'  # 设置自定义登录路径
+LOGIN_REDIRECT_URL = '/profile/'  # 登录后跳转
+LOGOUT_REDIRECT_URL = '/login/'  # 使用绝对路径确保重定向
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -169,17 +171,7 @@ SESSION_COOKIE_AGE = 1209600  # 2周会话有效期
 
 # Jazzmin配置
 JAZZMIN_SETTINGS = {
-    # 基础配置
-    "site_title": "音乐管理系统",
-    "site_header": "音乐管理后台",
-    "site_brand": "音乐管理平台",
-    "welcome_sign": "欢迎进入音乐管理后台",
-    
-    # 语言相关
-    "language_chooser": False,  # 关闭语言选择器
-    "show_ui_builder": False,   # 关闭UI配置器
-    
-    # 侧边栏配置
+    "hide_apps": [],  # 确保没有隐藏应用
     "navigation_expanded": True,
     "icons": {
         "auth.user": "fas fa-user-cog",
@@ -209,4 +201,31 @@ JAZZMIN_SETTINGS = {
 LANGUAGE_CODE = 'zh-hans'
 USE_I18N = True
 USE_L10N = True
+
+# 在文件末尾添加
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# 在现有配置下方添加
+LOGOUT_REDIRECT_URL = 'login'  # 双重保障
+
+# 在文件底部添加
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'WARNING',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+            },
+        },
+    }
 
