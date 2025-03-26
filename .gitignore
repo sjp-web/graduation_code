@@ -5,6 +5,29 @@
 /.vscode/
 /bin/
 
+# 虚拟环境
+/.venv/
+/venv/
+/env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 数据库文件
+*.sqlite3
+*.db
+# 排除所有SQL文件，但保留特定备份
+*.sql
+!music_backup_.sql
+
+# Django相关
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media
+
+# 系统文件
 .classpath
 .project
 .settings

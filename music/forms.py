@@ -32,7 +32,7 @@ class MusicForm(forms.ModelForm):
         }
         widgets = {
             'audio_file': forms.FileInput(attrs={
-                'accept': '.mp3,.wav,.aac',
+                'accept': '.mp3,.wav,.aac,.m4a',
                 'class': 'form-control form-control-lg'
             }),
             'album': forms.TextInput(attrs={'placeholder': '专辑名称'}),
@@ -56,8 +56,19 @@ class MusicForm(forms.ModelForm):
                 raise ValidationError('文件大小不能超过20MB')
             
             # 文件类型验证
-            if audio_file.content_type not in settings.ALLOWED_AUDIO_TYPES:
-                raise ValidationError('只支持MP3、WAV和AAC格式')
+            content_type = audio_file.content_type
+            file_extension = audio_file.name.lower().split('.')[-1]
+            
+            # 检查文件扩展名
+            if file_extension not in ['mp3', 'wav', 'aac', 'm4a']:
+                raise ValidationError('只支持MP3、WAV、AAC和M4A格式')
+            
+            # 检查内容类型
+            if content_type not in settings.ALLOWED_AUDIO_TYPES:
+                # 对于M4A文件，特殊处理
+                if file_extension == 'm4a' and content_type in ['audio/mp4', 'audio/x-m4a']:
+                    return audio_file
+                raise ValidationError(f'不支持的文件格式: {content_type}')
                 
         return audio_file
 

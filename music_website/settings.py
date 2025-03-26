@@ -43,7 +43,7 @@ INSTALLED_APPS = [
 ]
 
 # 这里添加 LOGIN_URL
-LOGIN_URL = '/accounts/login/'  # 设置自定义登录路径
+LOGIN_URL = '/login/'  # 设置自定义登录路径
 LOGIN_REDIRECT_URL = '/profile/'  # 登录后跳转
 LOGOUT_REDIRECT_URL = '/login/'  # 使用绝对路径确保重定向
 
@@ -94,8 +94,8 @@ DATABASES = {
         'NAME': 'music_website',
         'USER': 'shengjieping',
         'PASSWORD': 'sheng5016',
-        'HOST': 'localhost',   # 如有必要可替换为你的数据库主机
-        'PORT': '3306',        # MySQL 默认端口
+        'HOST': 'localhost',   
+        'PORT': '3306',        
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
@@ -161,7 +161,7 @@ FILE_UPLOAD_HANDLERS = [
 PAGE_SIZE = 10
 
 # 允许的文件类型
-ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac']
+ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac', 'audio/mp4', 'audio/x-m4a']
 MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20MB
 
 # 保留必要安全设置
