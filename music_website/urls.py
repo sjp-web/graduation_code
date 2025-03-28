@@ -29,3 +29,9 @@ urlpatterns = [
     path('', include('music.urls')),  # 确保主路径指向music应用
     path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='auth')),  # 添加认证系统
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# 在DEBUG模式下添加Debug Toolbar URLs
+if settings.DEBUG:
+    urlpatterns += [
+        path('__debug__/', include('debug_toolbar.urls')),
+    ]

@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Django命令行工具，用于管理项目。"""
 import os
 import sys
 
 
 def main():
-    """Run administrative tasks."""
+    """运行管理任务"""
+    # 根据环境变量设置Django设置模块
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'music_website.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
+            "无法导入Django。请确保它已安装并且在PYTHONPATH环境变量中可用。"
+            "您是否忘记激活虚拟环境?"
         ) from exc
     execute_from_command_line(sys.argv)
 

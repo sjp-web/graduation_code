@@ -6,14 +6,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>数据统计</h2>
+    <h2 class="mb-4"><i class="fa-solid fa-chart-line me-2"></i>数据统计</h2>
     
     <div class="row g-4">
         <!-- 个人数据 -->
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>我的数据</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-user me-2"></i>我的数据</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -30,7 +30,7 @@
                             </div>
                         </div>
                     </div>
-                    <h6 class="mb-3"><i class="fas fa-history me-2"></i>最近上传</h6>
+                    <h6 class="mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>最近上传</h6>
                     <div class="list-group">
                         {% for music in stats.user_stats.recent_uploads %}
                         <a href="{% url 'music_detail' music.id %}" 
@@ -48,7 +48,7 @@
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>全站数据</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-globe me-2"></i>全站数据</h5>
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
@@ -65,7 +65,7 @@
                             </div>
                         </div>
                     </div>
-                    <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>热门分类</h6>
+                    <h6 class="mb-3"><i class="fa-solid fa-chart-pie me-2"></i>热门分类</h6>
                     <div class="list-group">
                         {% for cat in stats.global_stats.popular_categories %}
                         <div class="list-group-item d-flex justify-content-between">
@@ -84,7 +84,7 @@
         <div class="col-lg-6">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>音乐分类分布</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-chart-pie me-2"></i>音乐分类分布</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="categoryChart" style="height: 300px;"></canvas>
@@ -95,7 +95,7 @@
         <div class="col-lg-6">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>下载量趋势</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-chart-line me-2"></i>下载量趋势</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="downloadsChart" style="height: 300px;"></canvas>
@@ -109,7 +109,7 @@
         <div class="col-lg-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-warning text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>每日新增用户趋势</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-users-line me-2"></i>每日新增用户趋势</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="userTrendChart" style="height: 400px;"></canvas>
@@ -158,19 +158,37 @@ new Chart(document.getElementById('categoryChart'), {
     }
 });
 
-// 下载量柱状图 
+// 下载量趋势图
 new Chart(document.getElementById('downloadsChart'), {
-    type: 'bar',
+    type: 'line',
     data: {
-        labels: ['总下载量', '平均下载量'],
+        labels: {{ stats.downloads_trend.date_labels|safe }},
         datasets: [{
-            label: '下载统计',
-            data: [
-                {{ stats.downloads_trend.total_downloads|default:0 }},
-                {{ stats.downloads_trend.avg_downloads|default:0|floatformat:1 }}
-            ],
-            backgroundColor: ['#3a3ab7','#5a5ac9']
+            label: '每日下载量',
+            data: {{ stats.downloads_trend.daily_downloads|safe }},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+            fill: true,
+            tension: 0.4
         }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '下载次数'
+                }
+            }
+        },
+        plugins: {
+            title: {
+                display: true,
+                text: '总下载量: {{ stats.downloads_trend.total_downloads }}，平均每首歌下载量: {{ stats.downloads_trend.avg_downloads|floatformat:1 }}'
+            }
+        }
     }
 });
 
@@ -182,8 +200,8 @@ new Chart(document.getElementById('userTrendChart'), {
         datasets: [{
             label: '新增用户数',
             data: {{ stats.daily_users.data|safe }},
-            borderColor: '#4e73df',
-            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            borderColor: '#f6c23e',
+            backgroundColor: 'rgba(246, 194, 62, 0.1)',
             fill: true,
             tension: 0.4
         }]

@@ -1,6 +1,6 @@
 # music/admin.py
 from django.contrib import admin
-from .models import Music, Comment, Profile, AdminLog
+from .models import Music, Comment, Profile, AdminLog, MusicDownload
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.html import format_html
@@ -140,6 +140,17 @@ class LogEntryAdmin(admin.ModelAdmin):
     list_filter = ['action_time', 'content_type']
     search_fields = ['user__username', 'object_repr']
     date_hierarchy = 'action_time'
+
+@admin.register(MusicDownload)
+class MusicDownloadAdmin(admin.ModelAdmin):
+    list_display = ('music', 'user', 'download_time', 'ip_address')
+    list_filter = (('download_time', DateRangeFilter), 'user')
+    search_fields = ('music__title', 'user__username', 'ip_address')
+    date_hierarchy = 'download_time'
+    
+    def has_change_permission(self, request, obj=None):
+        # 下载记录不应被修改
+        return False
 
 # 自定义管理仪表板
 class CustomAdminSite(admin.AdminSite):

@@ -122,6 +122,22 @@ class Comment(models.Model):
         verbose_name = '用户评论'
         verbose_name_plural = '评论管理'
 
+# 添加音乐下载记录模型
+class MusicDownload(models.Model):
+    """音乐下载记录"""
+    music = models.ForeignKey(Music, related_name='downloads', on_delete=models.CASCADE, verbose_name='下载音乐')
+    user = models.ForeignKey(User, related_name='music_downloads', on_delete=models.CASCADE, verbose_name='下载用户')
+    download_time = models.DateTimeField(auto_now_add=True, verbose_name='下载时间')
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP地址')
+    
+    def __str__(self):
+        return f'{self.user.username} 下载了 {self.music.title} 于 {self.download_time}'
+    
+    class Meta:
+        verbose_name = '下载记录'
+        verbose_name_plural = '下载记录管理'
+        ordering = ['-download_time']
+
 class AdminLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action = models.CharField(max_length=200)

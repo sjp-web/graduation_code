@@ -9,7 +9,7 @@
     <!-- 返回导航 -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'music_list' %}">音乐列表</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'music_list' %}"><i class="fa-solid fa-home me-1"></i>音乐列表</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ music.title }}</li>
         </ol>
     </nav>
@@ -24,7 +24,7 @@
                      style="height: 300px; object-fit: cover;">
                 {% else %}
                 <div class="bg-light h-100 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-compact-disc fa-5x text-muted"></i>
+                    <i class="fa-solid fa-record-vinyl fa-5x text-muted"></i>
                 </div>
                 {% endif %}
             </div>

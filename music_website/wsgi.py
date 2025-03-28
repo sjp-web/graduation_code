@@ -1,16 +1,14 @@
 """
-WSGI config for music_website project.
+WSGI配置文件
 
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
+用于生产部署Django应用
 """
 
 import os
 
 from django.core.wsgi import get_wsgi_application
 
+# 根据环境变量设置Django设置模块
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'music_website.settings')
 
 application = get_wsgi_application()
