@@ -109,19 +109,72 @@ python manage.py runserver
 - `backup_data.py` - 数据备份脚本
 - `restore_data.py` - 数据恢复脚本
 
-## 备份与恢复
+## 数据备份与恢复指南
 
-### 备份数据
+### 重要说明
 
+在重新克隆代码或重置代码之前，请务必先备份以下文件，否则可能导致数据丢失：
+
+1. `.env` 文件：包含数据库配置等敏感信息
+2. `media` 目录：包含用户上传的音乐文件和图片
+3. 数据库备份文件：`music_backup_.sql`
+
+### 备份步骤
+
+1. **创建备份文件夹**：
 ```bash
-python backup_data.py
+mkdir D:\music_backup
 ```
 
-### 恢复数据
-
+2. **备份关键文件**：
 ```bash
+# 备份数据库
+python backup_data.py
+
+# 复制数据库备份文件
+copy music_backup_.sql D:\music_backup\
+
+# 复制环境配置文件
+copy .env D:\music_backup\
+
+# 复制media文件夹（如果有上传的音乐和图片）
+xcopy /E /I media D:\music_backup\media
+```
+
+### 恢复步骤
+
+1. **删除当前代码并重新克隆**：
+```bash
+cd ..
+rmdir /S /Q graduation_code
+git clone https://github.com/sjp-web/graduation_code.git
+cd graduation_code
+```
+
+2. **恢复备份文件**：
+```bash
+# 恢复环境配置文件
+copy D:\music_backup\.env .
+
+# 恢复数据库备份文件
+copy D:\music_backup\music_backup_.sql .
+
+# 恢复media文件夹
+xcopy /E /I D:\music_backup\media media
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 恢复数据库数据
 python restore_data.py
 ```
+
+### 注意事项
+
+1. 确保在删除代码前已经完成所有备份
+2. 备份文件夹建议放在项目目录之外
+3. 如果遇到GitHub连接问题，也可以直接从GitHub网站下载ZIP压缩包
+4. 恢复数据后，建议测试一下网站功能是否正常
 
 ## 主要功能
 
