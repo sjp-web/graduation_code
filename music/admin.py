@@ -11,7 +11,7 @@ from django.shortcuts import render
 from django.urls import path
 from django.contrib.auth.models import User, Group
 from django.utils import timezone
-from . import views
+from .views import admin_dashboard
 
 # 音乐资源定义（用于导入导出）
 class MusicResource(resources.ModelResource):
@@ -160,7 +160,7 @@ class CustomAdminSite(admin.AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('dashboard/', self.admin_view(views.admin_dashboard), name='dashboard')
+            path('dashboard/', self.admin_view(admin_dashboard), name='dashboard')
         ]
         return custom_urls + urls
 
