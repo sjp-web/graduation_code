@@ -1,4 +1,4 @@
-# 核心依赖
+﻿# 核心依赖
 Django>=4.2.0
 django-jazzmin
 mysqlclient

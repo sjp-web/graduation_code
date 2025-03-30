@@ -160,7 +160,7 @@ copy D:\music_backup\.env .
 copy D:\music_backup\music_backup_.sql .
 
 # 恢复media文件夹
-xcopy /E /I D:\music_backup\media media
+xcopy /E /I D:\music_backup\media backup\media
 
 # 安装依赖
 pip install -r requirements.txt
