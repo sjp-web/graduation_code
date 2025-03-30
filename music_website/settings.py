@@ -234,6 +234,22 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Jazzmin配置
 JAZZMIN_SETTINGS = {
+    # 基本设置
+    "site_title": "音乐网站管理",
+    "site_header": "音乐网站管理系统",
+    "site_brand": "音乐网站",
+    "welcome_sign": "欢迎访问音乐网站管理后台",
+    "copyright": "音乐分享与管理平台 - 毕业设计作品",
+    
+    # UI设置
+    "show_ui_builder": True,
+    "changeform_format": "horizontal_tabs",
+    "topmenu_links": [
+        {"name": "主页", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "回到网站", "url": "/", "new_window": True},
+    ],
+    
+    # 图标设置
     "hide_apps": [],  # 确保没有隐藏应用
     "navigation_expanded": True,
     "icons": {
@@ -243,17 +259,42 @@ JAZZMIN_SETTINGS = {
         "music.Comment": "fas fa-comment-dots",
         "music.Profile": "fas fa-id-card",
         "music.AdminLog": "fas fa-clipboard-list",
+        "music.MusicDownload": "fas fa-download",
     },
+    
+    # 模型显示顺序
     "order_with_respect_to": [
         "music", 
         "auth",
     ],
     
-    # 自定义菜单项（可选）
+    # 自定义菜单项
     "custom_links": {
+        # 添加前台快捷访问区域，放在最上方
+        "前台快捷访问": [{
+            "name": "网站首页",
+            "url": "/",
+            "icon": "fas fa-home",
+            "new_window": True
+        }, {
+            "name": "音乐搜索",
+            "url": "/search/",
+            "icon": "fas fa-search",
+            "new_window": True
+        }, {
+            "name": "数据统计",
+            "url": "/statistics/",
+            "icon": "fas fa-chart-bar",
+            "new_window": True
+        }, {
+            "name": "个人资料",
+            "url": "/profile/",
+            "icon": "fas fa-user",
+            "new_window": True
+        }],
         "music": [{
             "name": "数据看板",
-            "url": "music_admin:dashboard",  # 匹配自定义命名空间
+            "url": "admin_dashboard",  # 更新为正确的URL名称
             "icon": "fas fa-chart-line",
             "permissions": ["auth.view_user"]
         }]

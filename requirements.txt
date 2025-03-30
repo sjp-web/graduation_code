@@ -7,6 +7,7 @@ django-resized
 Pillow
 django-import-export
 python-dotenv
+xlwt  # 用于Excel文件导出
 
 # 开发与调试工具
 django-debug-toolbar==5.1.0

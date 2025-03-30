@@ -1,0 +1,98 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style>
+    .dashboard-welcome {
+        background: linear-gradient(45deg, var(--primary-dark), var(--primary-color));
+        color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-welcome h2 {
+        font-size: 24px;
+        margin: 0 0 10px 0;
+    }
+    
+    .dashboard-welcome p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .app-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .app-item {
+        flex: 1 0 300px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .app-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+    }
+    
+    .app-header {
+        background: linear-gradient(45deg, var(--primary-dark), var(--primary-color));
+        color: white;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .model-list {
+        padding: 0;
+    }
+    
+    .model-list tr {
+        transition: background 0.2s;
+    }
+    
+    .model-list tr:hover {
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    
+    .model-list th {
+        padding: 12px 15px;
+    }
+    
+    .model-list td {
+        padding: 10px 15px;
+    }
+    
+    .model-list a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .model-list a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}"><i class="fas fa-home"></i> {% trans 'Home' %}</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-welcome">
+    <h2><i class="fas fa-tachometer-alt"></i> 欢迎来到音乐管理系统</h2>
+    <p>您可以在这里管理网站上的音乐、用户和评论等内容。</p>
+</div>
+{{ block.super }}
+{% endblock %} 

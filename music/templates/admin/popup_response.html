@@ -1,0 +1,21 @@
+{% extends "admin/popup_response.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" type="text/css" href="{% static 'css/admin/custom_admin.css' %}">
+<style>
+    body.popup {
+        padding: 15px;
+        background-color: #f9f9f9;
+    }
+    
+    .popup #container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+    }
+</style>
+{% endblock %} 

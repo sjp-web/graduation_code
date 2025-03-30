@@ -6,6 +6,20 @@
 
 {% block content %}
 <div class="container py-5">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'music_list' %}">
+                    <i class="fa-solid fa-compact-disc me-1"></i>音乐库
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fa-solid fa-cloud-upload-alt me-1"></i>上传音乐
+            </li>
+        </ol>
+    </nav>
+    
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="text-center mb-5">

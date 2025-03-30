@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}"><i class="fas fa-home"></i> {% trans 'Home' %}</a>
+    {% if app_label %}
+        &rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ app_label|capfirst }}</a>
+    {% endif %}
+    {% if model_name %}
+        &rsaquo; {% if changelist_url %}<a href="{{ changelist_url }}">{{ model_name|capfirst }}</a>{% else %}{{ model_name|capfirst }}{% endif %}
+    {% endif %}
+    {% if title %} &rsaquo; {{ title }}{% endif %}
+</div> 

@@ -12,6 +12,7 @@ from django.urls import path
 from django.contrib.auth.models import User, Group
 from django.utils import timezone
 from .views import admin_dashboard
+from django.db.models import Count
 
 # 音乐资源定义（用于导入导出）
 class MusicResource(resources.ModelResource):
@@ -143,14 +144,197 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 @admin.register(MusicDownload)
 class MusicDownloadAdmin(admin.ModelAdmin):
-    list_display = ('music', 'user', 'download_time', 'ip_address')
+    list_display = ('music_link', 'user_link', 'formatted_time', 'location_info', 'status_tag')
     list_filter = (('download_time', DateRangeFilter), 'user')
     search_fields = ('music__title', 'user__username', 'ip_address')
     date_hierarchy = 'download_time'
+    list_per_page = 20
+    readonly_fields = ('music', 'user', 'download_time', 'ip_address')
+    actions = ['export_csv', 'export_excel']
+    
+    # 修正模板路径
+    change_list_template = 'admin/music/musicdownload/change_list.html'
+    
+    class Media:
+        css = {
+            'all': ('css/admin/custom_admin.css',)
+        }
+        js = ('js/admin/custom_admin.js',)
     
     def has_change_permission(self, request, obj=None):
         # 下载记录不应被修改
         return False
+        
+    def has_add_permission(self, request):
+        # 不允许手动添加下载记录
+        return False
+        
+    def music_link(self, obj):
+        """显示音乐标题并链接到音乐详情页"""
+        return format_html(
+            '<strong><a href="/admin/music/music/{}/change/">'
+            '<i class="fas fa-music" style="margin-right:5px;"></i>{}</a></strong>',
+            obj.music.id, obj.music.title
+        )
+    music_link.short_description = '音乐作品'
+    music_link.admin_order_field = 'music__title'
+    
+    def user_link(self, obj):
+        """显示用户名并链接到用户详情页"""
+        return format_html(
+            '<a href="/admin/auth/user/{}/change/">'
+            '<i class="fas fa-user" style="margin-right:5px;"></i>{}</a>',
+            obj.user.id, obj.user.username
+        )
+    user_link.short_description = '下载用户'
+    user_link.admin_order_field = 'user__username'
+    
+    def formatted_time(self, obj):
+        """格式化下载时间显示"""
+        return format_html(
+            '<span title="{}">'
+            '<i class="fas fa-calendar-alt" style="margin-right:5px;"></i>{}</span>',
+            obj.download_time.strftime('%Y-%m-%d %H:%M:%S'),
+            obj.download_time.strftime('%Y-%m-%d %H:%M')
+        )
+    formatted_time.short_description = '下载时间'
+    formatted_time.admin_order_field = 'download_time'
+    
+    def location_info(self, obj):
+        """显示IP地址信息"""
+        if obj.ip_address:
+            return format_html(
+                '<span class="text-muted">'
+                '<i class="fas fa-map-marker-alt" style="margin-right:5px;"></i>{}</span>',
+                obj.ip_address
+            )
+        return format_html('<span class="text-muted">-</span>')
+    location_info.short_description = 'IP地址'
+    location_info.admin_order_field = 'ip_address'
+    
+    def status_tag(self, obj):
+        """显示下载状态标签"""
+        now = timezone.now()
+        time_diff = now - obj.download_time
+        
+        if time_diff.days < 1:
+            color = 'success'
+            status = '今日下载'
+        elif time_diff.days < 7:
+            color = 'info'
+            status = '本周下载'
+        elif time_diff.days < 30:
+            color = 'warning'
+            status = '本月下载'
+        else:
+            color = 'secondary'
+            status = '历史下载'
+            
+        return format_html(
+            '<span class="badge bg-{}" style="font-size: 85%;">{}</span>',
+            color, status
+        )
+    status_tag.short_description = '下载状态'
+    
+    def export_csv(self, request, queryset):
+        """导出选中的下载记录为CSV文件"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="download_records.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['音乐标题', '下载用户', '下载时间', 'IP地址'])
+        
+        for record in queryset:
+            writer.writerow([
+                record.music.title,
+                record.user.username,
+                record.download_time.strftime('%Y-%m-%d %H:%M:%S'),
+                record.ip_address or '-'
+            ])
+            
+        return response
+    export_csv.short_description = "导出所选记录为CSV"
+    
+    def export_excel(self, request, queryset):
+        """导出选中的下载记录为Excel文件"""
+        import xlwt
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="download_records.xls"'
+        
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('下载记录')
+        
+        # 设置标题行样式
+        header_style = xlwt.XFStyle()
+        font = xlwt.Font()
+        font.bold = True
+        header_style.font = font
+        
+        # 写入标题行
+        row_num = 0
+        columns = ['音乐标题', '艺术家', '下载用户', '下载时间', 'IP地址']
+        for col_num, column_title in enumerate(columns):
+            ws.write(row_num, col_num, column_title, header_style)
+        
+        # 写入数据行
+        date_style = xlwt.XFStyle()
+        date_style.num_format_str = 'YYYY-MM-DD HH:MM:SS'
+        
+        for record in queryset:
+            row_num += 1
+            ws.write(row_num, 0, record.music.title)
+            ws.write(row_num, 1, record.music.artist)
+            ws.write(row_num, 2, record.user.username)
+            ws.write(row_num, 3, record.download_time, date_style)
+            ws.write(row_num, 4, record.ip_address or '-')
+            
+        wb.save(response)
+        return response
+    export_excel.short_description = "导出所选记录为Excel"
+    
+    def changelist_view(self, request, extra_context=None):
+        """增强下载记录列表视图，添加统计信息"""
+        # 添加基本统计数据
+        extra_context = extra_context or {}
+        
+        # 计算今日下载量
+        today = timezone.now().date()
+        today_count = MusicDownload.objects.filter(download_time__date=today).count()
+        
+        # 计算本周下载量
+        week_start = today - timezone.timedelta(days=today.weekday())
+        week_count = MusicDownload.objects.filter(download_time__date__gte=week_start).count()
+        
+        # 计算本月下载量
+        month_start = today.replace(day=1)
+        month_count = MusicDownload.objects.filter(download_time__date__gte=month_start).count()
+        
+        # 计算热门下载
+        top_music = MusicDownload.objects.values('music__title', 'music__artist').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        # 计算活跃用户
+        active_users = MusicDownload.objects.values('user__username').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        extra_context.update({
+            'title': '下载记录管理',
+            'today_count': today_count,
+            'week_count': week_count,
+            'month_count': month_count,
+            'total_count': MusicDownload.objects.count(),
+            'top_music': top_music,
+            'active_users': active_users
+        })
+        
+        return super().changelist_view(request, extra_context=extra_context)
 
 # 自定义管理仪表板
 class CustomAdminSite(admin.AdminSite):

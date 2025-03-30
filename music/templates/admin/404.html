@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style>
+    .error-container {
+        text-align: center;
+        padding: 40px 20px;
+        max-width: 500px;
+        margin: 50px auto;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .error-icon {
+        font-size: 60px;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+    }
+    
+    .error-title {
+        font-size: 24px;
+        color: var(--primary-dark);
+        margin-bottom: 15px;
+    }
+    
+    .error-message {
+        color: #666;
+        margin-bottom: 25px;
+    }
+    
+    .return-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+    
+    .return-btn:hover {
+        background-color: var(--primary-dark);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}"><i class="fas fa-home"></i> {% trans 'Home' %}</a>
+    &rsaquo; {% trans 'Page not found' %}
+</div>
+{% endblock %}
+
+{% block title %}{% trans 'Page not found' %}{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-icon">
+        <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <h1 class="error-title">{% trans 'Page not found' %}</h1>
+    <p class="error-message">{% trans "We're sorry, but the requested page could not be found." %}</p>
+    <a href="{% url 'admin:index' %}" class="return-btn">
+        <i class="fas fa-arrow-left"></i> {% trans 'Return to home' %}
+    </a>
+</div>
+{% endblock %} 
