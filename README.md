@@ -11,7 +11,7 @@
 - 评论系统
 - 音乐下载统计
 - 后台管理系统（基于Django Admin + Jazzmin美化）
-- 数据备份与恢复功能
+- 数据分析与统计功能
 
 ## 技术栈
 
@@ -23,52 +23,67 @@
 - django-admin-rangefilter (日期范围过滤)
 - django-import-export (数据导入导出)
 
-## 安装指南
+## 详细安装指南 (适合初学者)
 
-### 1. 克隆项目
+### 1. 安装必要的软件
+
+首先，确保您已经安装了以下软件：
+
+- [Python 3.8+](https://www.python.org/downloads/) - 编程语言
+- [MySQL](https://dev.mysql.com/downloads/installer/) - 数据库系统
+- [Git](https://git-scm.com/downloads) - 版本控制工具
+
+### 2. 获取项目代码
+
+打开命令提示符（Windows）或终端（Mac/Linux），执行以下命令：
 
 ```bash
-git clone <项目地址>
-cd <项目文件夹>
+# 克隆项目
+git clone https://github.com/sjp-web/graduation_code.git
+
+# 进入项目文件夹
+cd graduation_code
 ```
 
-### 2. 创建虚拟环境
+### 3. 创建虚拟环境
+
+虚拟环境是一个独立的Python环境，可以避免项目之间的依赖冲突。
 
 ```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/Mac
-source .venv/bin/activate
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境（Windows）
+venv\Scripts\activate
+
+# 激活虚拟环境（Mac/Linux）
+# source venv/bin/activate
 ```
 
-### 3. 安装依赖
+成功激活后，命令行前面会出现`(venv)`标识。
+
+### 4. 安装项目依赖
 
 ```bash
+# 安装所有需要的库
 pip install -r requirements.txt
 ```
 
-### 4. 配置数据库
+### 5. 配置环境变量
 
-在 `music_website/settings.py` 中配置数据库连接：
+将`.env.example`文件复制为`.env`，然后根据您的环境修改其中的配置：
 
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'music_website',
-        'USER': '<数据库用户名>',
-        'PASSWORD': '<数据库密码>',
-        'HOST': 'localhost',   
-        'PORT': '3306',        
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
-    }
-}
+```bash
+# Windows
+copy .env.example .env
+
+# Mac/Linux
+# cp .env.example .env
 ```
 
-### 5. 创建数据库
+然后用文本编辑器打开`.env`文件，修改数据库配置等信息。
+
+### 6. 创建数据库
 
 在MySQL中创建数据库：
 
@@ -76,105 +91,99 @@ DATABASES = {
 CREATE DATABASE music_website CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 6. 数据迁移
+您可以使用MySQL命令行工具或者图形化工具（如MySQL Workbench）来执行此命令。
+
+### 7. 进行数据库迁移
 
 ```bash
+# 创建数据库表
 python manage.py migrate
 ```
 
-### 7. 创建超级用户
+如果您有已有的数据库备份，也可以直接导入：
+
+```bash
+# 方法一：使用命令行导入SQL文件
+mysql -u 您的用户名 -p music_website < music_backup_.sql
+
+# 方法二：使用图形化工具导入
+# 打开MySQL Workbench，连接到您的数据库，然后选择导入SQL文件
+```
+
+### 8. 创建管理员账户
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 8. 运行开发服务器
+按照提示输入用户名、邮箱和密码。
+
+### 9. 启动开发服务器
 
 ```bash
 python manage.py runserver
 ```
 
+现在，打开浏览器，访问 http://127.0.0.1:8000/ 即可看到网站首页。
+
+管理后台地址为 http://127.0.0.1:8000/admin/，使用刚才创建的管理员账户登录。
+
 ## 项目结构
 
 - `music/` - 主应用目录
-  - `models.py` - 数据模型定义
-  - `views.py` - 视图函数
-  - `forms.py` - 表单定义
   - `admin.py` - 管理后台配置
-  - `templates/` - 模板文件
-  - `static/` - 静态文件
+  - `forms.py` - 表单定义
+  - `models.py` - 数据模型定义
+  - `urls.py` - URL路由配置
+  - `static/` - 静态文件目录
+  - `templates/` - 模板文件目录
+  - `templatetags/` - 自定义模板标签
+  - `tests/` - 测试目录
+  - `utils/` - 工具函数目录
+    - `decorators/` - 装饰器工具
+    - `file_handlers/` - 文件处理工具
+    - `statistics/` - 数据统计工具
+    - `security.py` - 安全相关工具
+    - `string_utils.py` - 字符串处理工具
+    - `http_utils.py` - HTTP工具
+  - `views/` - 视图函数目录
+    - `admin_views.py` - 管理员视图
+    - `music_views.py` - 音乐相关视图
+    - `search_views.py` - 搜索相关视图
+    - `stats_views.py` - 统计相关视图
+    - `user_views.py` - 用户相关视图
 - `music_website/` - 项目配置目录
 - `media/` - 用户上传的媒体文件存储目录
-- `backup/` - 数据备份目录
-- `backup_data.py` - 数据备份脚本
-- `restore_data.py` - 数据恢复脚本
+- `requirements.txt` - 项目依赖列表
+- `manage.py` - Django项目管理脚本
+- `.env` - 环境配置文件
+- `.env.example` - 环境配置示例
 
-## 数据备份与恢复指南
+## 常见问题解答 (FAQ)
 
-### 重要说明
+### 1. 我没有安装MySQL，可以使用SQLite吗？
 
-在重新克隆代码或重置代码之前，请务必先备份以下文件，否则可能导致数据丢失：
+可以。SQLite是一个轻量级数据库，适合开发和测试。修改`.env`文件，将`DB_ENGINE`改为`django.db.backends.sqlite3`，并删除其他数据库相关配置项。
 
-1. `.env` 文件：包含数据库配置等敏感信息
-2. `media` 目录：包含用户上传的音乐文件和图片
-3. 数据库备份文件：`music_backup_.sql`
+### 2. 运行时遇到"No module named xxx"错误怎么办？
 
-### 备份步骤
+这表示缺少某个Python库。请确保已激活虚拟环境并正确安装了所有依赖：
 
-1. **创建备份文件夹**：
 ```bash
-mkdir D:\music_backup
-```
-
-2. **备份关键文件**：
-```bash
-# 备份数据库
-python backup_data.py
-
-# 复制数据库备份文件
-copy music_backup_.sql D:\music_backup\
-
-# 复制环境配置文件
-copy .env D:\music_backup\
-
-# 复制media文件夹（如果有上传的音乐和图片）
-xcopy /E /I media D:\music_backup\media
-```
-
-### 恢复步骤
-
-1. **删除当前代码并重新克隆**：
-```bash
-cd ..
-rmdir /S /Q graduation_code
-git clone https://github.com/sjp-web/graduation_code.git
-cd graduation_code
-```
-
-2. **恢复备份文件**：
-```bash
-# 恢复环境配置文件
-copy D:\music_backup\.env .
-
-# 恢复数据库备份文件
-copy D:\music_backup\music_backup_.sql .
-
-# 恢复media文件夹
-xcopy /E /I D:\music_backup\media backup\media
-
-# 安装依赖
 pip install -r requirements.txt
-
-# 恢复数据库数据
-python restore_data.py
 ```
 
-### 注意事项
+### 3. 如何修改网站配置？
 
-1. 确保在删除代码前已经完成所有备份
-2. 备份文件夹建议放在项目目录之外
-3. 如果遇到GitHub连接问题，也可以直接从GitHub网站下载ZIP压缩包
-4. 恢复数据后，建议测试一下网站功能是否正常
+大部分配置可以在`.env`文件中修改。更高级的配置可以在`music_website/settings.py`中找到。
+
+### 4. 如何重置密码？
+
+如果忘记了管理员密码，可以使用以下命令重置：
+
+```bash
+python manage.py changepassword 用户名
+```
 
 ## 主要功能
 
@@ -197,16 +206,7 @@ python restore_data.py
 # 生产环境: DEBUG=False
 ```
 
-使用环境切换工具：
-```bash
-# 切换到开发环境
-python switch_env.py dev
-
-# 切换到生产环境
-python switch_env.py prod
-```
-
-或者直接启动服务（会根据当前环境自动选择启动方式）：
+使用启动脚本：
 ```bash
 python start.py
 ```
@@ -296,7 +296,7 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/music_website
-ExecStart=/var/www/music_website/.venv/bin/gunicorn --workers=4 --bind=0.0.0.0:8000 music_website.wsgi:application
+ExecStart=/var/www/music_website/venv/bin/gunicorn --workers=4 --bind=0.0.0.0:8000 music_website.wsgi:application
 ExecReload=/bin/kill -s HUP $MAINPID
 Restart=on-failure
 RestartSec=5s
