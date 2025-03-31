@@ -1,18 +1,17 @@
 # music/admin.py
 from django.contrib import admin
-from .models import Music, Comment, Profile, AdminLog, MusicDownload, ChatMessage
+from .models import Music, Comment, Profile, AdminLog, MusicDownload, ChatMessage, FAQEntry, UnknownQuery
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.html import format_html
-from django.contrib.admin.models import LogEntry
 from rangefilter.filters import DateRangeFilter
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
 from django.urls import path
 from django.contrib.auth.models import User, Group
 from django.utils import timezone
 from .views import admin_dashboard
 from django.db.models import Count
+from django.http import HttpResponse
+from .utils.string_utils import truncate_text
 
 # 音乐资源定义（用于导入导出）
 class MusicResource(resources.ModelResource):
@@ -29,7 +28,7 @@ class MusicAdmin(ImportExportModelAdmin):
     search_fields = ('title', 'artist', 'album')
     readonly_fields = ('play_count', 'download_count', 'uploaded_by')
     list_per_page = 20
-    actions = ['approve_music', 'export_as_csv']
+    actions = ['export_selected_items']
     
     fieldsets = (
         ('基本信息', {
@@ -47,58 +46,131 @@ class MusicAdmin(ImportExportModelAdmin):
     )
 
     def cover_preview(self, obj):
+        """显示封面预览"""
         if obj.cover_image:
             return format_html('<img src="{}" style="max-height:50px;"/>', obj.cover_image.url)
         return "-"
     cover_preview.short_description = '封面预览'
 
     def upload_status(self, obj):
+        """显示上传状态标签"""
+        is_uploaded = bool(obj.audio_file)
         return format_html(
             '<span class="badge bg-{}">{}</span>',
-            'success' if obj.audio_file else 'danger',
-            '已上传' if obj.audio_file else '未上传'
+            'success' if is_uploaded else 'danger',
+            '已上传' if is_uploaded else '未上传'
         )
     upload_status.short_description = '上传状态'
 
     def save_model(self, request, obj, form, change):
+        """保存模型时自动设置上传者"""
         if not obj.uploaded_by:
             obj.uploaded_by = request.user
         super().save_model(request, obj, form, change)
-
-    def get_list_display(self, request):
-        return ['title', 'artist', 'category', 'play_count', 'download_count', 'cover_preview', 'upload_status']
+        
+    def export_selected_items(self, request, queryset):
+        """导出选中项目"""
+        resource = self.resource_class()
+        dataset = resource.export(queryset)
+        
+        # 根据请求的格式导出
+        format_type = request.POST.get('file_format', 'csv')
+        content_types = {
+            'csv': 'text/csv',
+            'json': 'application/json',
+            'xls': 'application/vnd.ms-excel',
+        }
+        
+        content_type = content_types.get(format_type, 'text/csv')
+        response = HttpResponse(content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="music_export.{format_type}"'
+        
+        # 导出到响应
+        if format_type == 'json':
+            response.write(dataset.json)
+        elif format_type == 'xls':
+            dataset.xls.save(response)
+        else:  # 默认CSV
+            response.write(dataset.csv)
+            
+        return response
+    export_selected_items.short_description = "导出选中记录"
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('truncated_content', 'user', 'music_link', 'created_at', 'is_recent')
-    search_fields = ('content', 'user__username', 'music__title')
+    list_display = ('truncated_content', 'user_display', 'music_link', 'created_at', 'is_recent')
+    search_fields = ('content', 'user__username', 'user__profile__nickname', 'music__title')
     list_filter = (('created_at', DateRangeFilter),)
-    list_select_related = ('user', 'music')
+    list_select_related = ('user', 'music', 'user__profile')
+    
+    def get_admin_url(self, app_label, model_name, obj_id, admin_site_name='music-admin'):
+        """获取管理界面URL"""
+        return f'/{admin_site_name}/{app_label}/{model_name}/{obj_id}/change/'
     
     def music_link(self, obj):
-        return format_html('<a href="/admin/music/music/{}/change/">{}</a>', obj.music.id, obj.music.title)
+        url = self.get_admin_url('music', 'music', obj.music.id)
+        return format_html('<a href="{}">{}</a>', url, obj.music.title)
     music_link.short_description = '关联音乐'
 
+    def user_display(self, obj):
+        nickname = getattr(obj.user.profile, 'nickname', None) if hasattr(obj.user, 'profile') else None
+        if nickname:
+            return format_html('{} <span class="text-muted">({}))</span>', nickname, obj.user.username)
+        return obj.user.username
+    user_display.short_description = '用户'
+    
     def is_recent(self, obj):
         return obj.created_at > timezone.now() - timezone.timedelta(days=3)
     is_recent.boolean = True
     is_recent.short_description = '近期评论'
 
     def truncated_content(self, obj):
-        return f"{obj.content[:30]}..." if len(obj.content) > 30 else obj.content
+        return truncate_text(obj.content)
     truncated_content.short_description = '评论内容'
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'avatar_preview', 'music_count', 'last_activity')
-    search_fields = ('user__username', 'bio')
-    readonly_fields = ('music_count',)
+    list_display = ('user', 'nickname', 'avatar_preview', 'music_count', 'last_activity')
+    search_fields = ('user__username', 'nickname', 'bio')
+    readonly_fields = ('music_count', 'avatar_edit_preview')
+    fieldsets = (
+        ('用户信息', {
+            'fields': ('user', 'nickname', 'bio', 'avatar_edit_preview', 'avatar', 'location', 'website')
+        }),
+        ('统计信息', {
+            'fields': ('music_count',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def _get_avatar_html(self, obj, max_height=50, extra_style=''):
+        """生成头像预览HTML的通用方法"""
+        if obj.avatar:
+            return format_html(
+                '<img src="{}" style="max-height:{}px;{}" />',
+                obj.avatar.url, max_height, extra_style
+            )
+        return format_html('<p style="color:#999;">未设置头像</p>')
     
     def avatar_preview(self, obj):
-        if obj.avatar:
-            return format_html('<img src="{}" style="max-height:50px;"/>', obj.avatar.url)
-        return "-"
+        return self._get_avatar_html(obj)
     avatar_preview.short_description = '头像预览'
+
+    def avatar_edit_preview(self, obj):
+        if obj.avatar:
+            html = self._get_avatar_html(
+                obj, 
+                max_height=150, 
+                extra_style='border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.2);'
+            )
+            return format_html(
+                '<div style="margin-bottom:10px;">{}'
+                '<p style="margin-top:5px; font-size:12px; color:#666;">当前头像预览</p>'
+                '</div>',
+                html
+            )
+        return self._get_avatar_html(obj)
+    avatar_edit_preview.short_description = '头像预览'
 
     def music_count(self, obj):
         return obj.user.music_set.count()
@@ -135,16 +207,9 @@ class AdminLogAdmin(admin.ModelAdmin):
         return format_html('<code>{}</code>', obj.target[:50])
     target_info.short_description = '操作目标'
 
-@admin.register(LogEntry)
-class LogEntryAdmin(admin.ModelAdmin):
-    list_display = ['action_time', 'user', 'content_type', 'object_repr', 'change_message']
-    list_filter = ['action_time', 'content_type']
-    search_fields = ['user__username', 'object_repr']
-    date_hierarchy = 'action_time'
-
 @admin.register(MusicDownload)
 class MusicDownloadAdmin(admin.ModelAdmin):
-    list_display = ('music_link', 'user_link', 'formatted_time', 'location_info', 'status_tag')
+    list_display = ('music_title', 'user_username', 'download_time', 'ip_address', 'status_tag')
     list_filter = (('download_time', DateRangeFilter), 'user')
     search_fields = ('music__title', 'user__username', 'ip_address')
     date_hierarchy = 'download_time'
@@ -159,49 +224,24 @@ class MusicDownloadAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # 不允许手动添加下载记录
         return False
+    
+    def get_admin_url(self, app_label, model_name, obj_id, admin_site_name='music-admin'):
+        """获取管理界面URL"""
+        return f'/{admin_site_name}/{app_label}/{model_name}/{obj_id}/change/'
         
-    def music_link(self, obj):
+    def music_title(self, obj):
         """显示音乐标题并链接到音乐详情页"""
-        return format_html(
-            '<strong><a href="/admin/music/music/{}/change/">'
-            '<i class="fas fa-music" style="margin-right:5px;"></i>{}</a></strong>',
-            obj.music.id, obj.music.title
-        )
-    music_link.short_description = '音乐作品'
-    music_link.admin_order_field = 'music__title'
+        url = self.get_admin_url('music', 'music', obj.music.id)
+        return format_html('<a href="{}">{}</a>', url, obj.music.title)
+    music_title.short_description = '音乐作品'
+    music_title.admin_order_field = 'music__title'
     
-    def user_link(self, obj):
+    def user_username(self, obj):
         """显示用户名并链接到用户详情页"""
-        return format_html(
-            '<a href="/admin/auth/user/{}/change/">'
-            '<i class="fas fa-user" style="margin-right:5px;"></i>{}</a>',
-            obj.user.id, obj.user.username
-        )
-    user_link.short_description = '下载用户'
-    user_link.admin_order_field = 'user__username'
-    
-    def formatted_time(self, obj):
-        """格式化下载时间显示"""
-        return format_html(
-            '<span title="{}">'
-            '<i class="fas fa-calendar-alt" style="margin-right:5px;"></i>{}</span>',
-            obj.download_time.strftime('%Y-%m-%d %H:%M:%S'),
-            obj.download_time.strftime('%Y-%m-%d %H:%M')
-        )
-    formatted_time.short_description = '下载时间'
-    formatted_time.admin_order_field = 'download_time'
-    
-    def location_info(self, obj):
-        """显示IP地址信息"""
-        if obj.ip_address:
-            return format_html(
-                '<span class="text-muted">'
-                '<i class="fas fa-map-marker-alt" style="margin-right:5px;"></i>{}</span>',
-                obj.ip_address
-            )
-        return format_html('<span class="text-muted">-</span>')
-    location_info.short_description = 'IP地址'
-    location_info.admin_order_field = 'ip_address'
+        url = self.get_admin_url('auth', 'user', obj.user.id)
+        return format_html('<a href="{}">{}</a>', url, obj.user.username)
+    user_username.short_description = '下载用户'
+    user_username.admin_order_field = 'user__username'
     
     def status_tag(self, obj):
         """显示下载状态标签"""
@@ -227,6 +267,29 @@ class MusicDownloadAdmin(admin.ModelAdmin):
         )
     status_tag.short_description = '下载状态'
     
+    def _get_export_data(self, queryset, include_artist=False):
+        """获取导出数据的通用方法"""
+        # 准备表头
+        headers = ['音乐标题']
+        if include_artist:
+            headers.append('艺术家')
+        headers.extend(['下载用户', '下载时间', 'IP地址'])
+        
+        # 准备数据行
+        rows = []
+        for record in queryset:
+            row = [record.music.title]
+            if include_artist:
+                row.append(record.music.artist)
+            row.extend([
+                record.user.username,
+                record.download_time.strftime('%Y-%m-%d %H:%M:%S'),
+                record.ip_address or '-'
+            ])
+            rows.append(row)
+            
+        return headers, rows
+    
     def export_csv(self, request, queryset):
         """导出选中的下载记录为CSV文件"""
         import csv
@@ -236,15 +299,11 @@ class MusicDownloadAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment; filename="download_records.csv"'
         
         writer = csv.writer(response)
-        writer.writerow(['音乐标题', '下载用户', '下载时间', 'IP地址'])
+        headers, rows = self._get_export_data(queryset)
         
-        for record in queryset:
-            writer.writerow([
-                record.music.title,
-                record.user.username,
-                record.download_time.strftime('%Y-%m-%d %H:%M:%S'),
-                record.ip_address or '-'
-            ])
+        writer.writerow(headers)
+        for row in rows:
+            writer.writerow(row)
             
         return response
     export_csv.short_description = "导出所选记录为CSV"
@@ -266,82 +325,183 @@ class MusicDownloadAdmin(admin.ModelAdmin):
         font.bold = True
         header_style.font = font
         
+        # 获取数据
+        headers, rows = self._get_export_data(queryset, include_artist=True)
+        
         # 写入标题行
-        row_num = 0
-        columns = ['音乐标题', '艺术家', '下载用户', '下载时间', 'IP地址']
-        for col_num, column_title in enumerate(columns):
-            ws.write(row_num, col_num, column_title, header_style)
+        for col_num, column_title in enumerate(headers):
+            ws.write(0, col_num, column_title, header_style)
         
         # 写入数据行
         date_style = xlwt.XFStyle()
         date_style.num_format_str = 'YYYY-MM-DD HH:MM:SS'
         
-        for record in queryset:
-            row_num += 1
-            ws.write(row_num, 0, record.music.title)
-            ws.write(row_num, 1, record.music.artist)
-            ws.write(row_num, 2, record.user.username)
-            ws.write(row_num, 3, record.download_time, date_style)
-            ws.write(row_num, 4, record.ip_address or '-')
+        for row_num, row_data in enumerate(rows, 1):
+            for col_num, cell_value in enumerate(row_data):
+                # 为日期列应用特殊样式
+                if col_num == 3 and isinstance(cell_value, str) and len(cell_value) == 19:
+                    # 日期列，但由于已转换为字符串，不再需要特殊处理
+                    ws.write(row_num, col_num, cell_value)
+                else:
+                    ws.write(row_num, col_num, cell_value)
             
         wb.save(response)
         return response
     export_excel.short_description = "导出所选记录为Excel"
     
+    def _get_period_count(self, period_filter):
+        """获取指定时段的下载计数"""
+        return MusicDownload.objects.filter(**period_filter).count()
+        
     def changelist_view(self, request, extra_context=None):
         """增强下载记录列表视图，添加统计信息"""
         # 添加基本统计数据
         extra_context = extra_context or {}
         
-        # 计算今日下载量
+        # 使用timezone获取当前日期
         today = timezone.now().date()
-        today_count = MusicDownload.objects.filter(download_time__date=today).count()
         
-        # 计算本周下载量
-        week_start = today - timezone.timedelta(days=today.weekday())
-        week_count = MusicDownload.objects.filter(download_time__date__gte=week_start).count()
+        # 构建各时段的过滤条件
+        period_filters = {
+            'today': {'download_time__date': today},
+            'week': {'download_time__date__gte': today - timezone.timedelta(days=today.weekday())},
+            'month': {'download_time__date__gte': today.replace(day=1)}
+        }
         
-        # 计算本月下载量
-        month_start = today.replace(day=1)
-        month_count = MusicDownload.objects.filter(download_time__date__gte=month_start).count()
+        # 获取各时段的下载量
+        counts = {
+            f"{period}_count": self._get_period_count(filters)
+            for period, filters in period_filters.items()
+        }
         
-        # 计算热门下载
+        # 使用同一个查询注解方式获取统计数据
         top_music = MusicDownload.objects.values('music__title', 'music__artist').annotate(
             count=Count('id')
         ).order_by('-count')[:5]
         
-        # 计算活跃用户
         active_users = MusicDownload.objects.values('user__username').annotate(
             count=Count('id')
         ).order_by('-count')[:5]
         
-        extra_context.update({
+        # 构建统计信息上下文
+        stats = {
             'title': '下载记录管理',
-            'today_count': today_count,
-            'week_count': week_count,
-            'month_count': month_count,
             'total_count': MusicDownload.objects.count(),
             'top_music': top_music,
             'active_users': active_users
-        })
+        }
         
+        # 添加各时段下载量
+        stats.update(counts)
+        
+        extra_context.update(stats)
         return super().changelist_view(request, extra_context=extra_context)
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ('user', 'short_message', 'short_response', 'created_at')
+    list_display = ('user', 'short_message', 'short_response', 'created_at', 'time_since')
     list_filter = ('created_at', 'user')
     search_fields = ('user__username', 'message', 'response')
     date_hierarchy = 'created_at'
+    list_per_page = 20
+    readonly_fields = ('user', 'message', 'response', 'created_at')
     
     def short_message(self, obj):
-        return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+        return truncate_text(obj.message, 50)
     
     def short_response(self, obj):
-        return obj.response[:50] + '...' if len(obj.response) > 50 else obj.response
+        return truncate_text(obj.response, 50)
+    
+    def time_since(self, obj):
+        """显示距离现在的时间"""
+        from django.utils.timesince import timesince
+        return f"{timesince(obj.created_at, timezone.now())}前"
     
     short_message.short_description = '用户消息'
     short_response.short_description = 'AI回复'
+    time_since.short_description = '时间'
+
+    actions = ['create_faq_from_chat']
+    
+    def create_faq_from_chat(self, request, queryset):
+        """将聊天记录转换为FAQ"""
+        for chat in queryset:
+            FAQEntry.objects.create(
+                question=chat.message,
+                answer=chat.response,
+                category='other'
+            )
+        self.message_user(request, f"已从{queryset.count()}条聊天记录创建FAQ")
+    
+    create_faq_from_chat.short_description = "将选中的聊天记录转为FAQ"
+
+@admin.register(FAQEntry)
+class FAQEntryAdmin(admin.ModelAdmin):
+    list_display = ('question', 'category', 'short_answer', 'is_active', 'updated_at')
+    list_filter = ('category', 'is_active', 'created_at')
+    search_fields = ('question', 'answer', 'keywords')
+    list_editable = ('is_active',)
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('question', 'answer', 'category', 'is_active')
+        }),
+        ('高级选项', {
+            'fields': ('keywords',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def short_answer(self, obj):
+        return truncate_text(obj.answer, 50)
+    
+    short_answer.short_description = '回答摘要'
+
+@admin.register(UnknownQuery)
+class UnknownQueryAdmin(admin.ModelAdmin):
+    list_display = ('query_excerpt', 'user', 'created_at', 'is_resolved', 'resolved_by')
+    list_filter = ('is_resolved', 'created_at')
+    search_fields = ('query', 'user__username')
+    readonly_fields = ('query', 'user', 'created_at')
+    fieldsets = (
+        ('问题信息', {
+            'fields': ('query', 'user', 'created_at')
+        }),
+        ('解决方案', {
+            'fields': ('is_resolved', 'resolved_by', 'suggested_answer')
+        }),
+    )
+    
+    def query_excerpt(self, obj):
+        return truncate_text(obj.query, 50)
+    
+    query_excerpt.short_description = '问题内容'
+    
+    actions = ['mark_as_resolved', 'create_faq']
+    
+    def mark_as_resolved(self, request, queryset):
+        """将问题标记为已解决"""
+        queryset.update(is_resolved=True, resolved_by=request.user)
+        self.message_user(request, f"已将{queryset.count()}个问题标记为已解决")
+    
+    def create_faq(self, request, queryset):
+        """从未解决问题创建FAQ"""
+        count = 0
+        for query in queryset:
+            if query.suggested_answer:
+                FAQEntry.objects.create(
+                    question=query.query,
+                    answer=query.suggested_answer,
+                    category='other'
+                )
+                query.is_resolved = True
+                query.resolved_by = request.user
+                query.save()
+                count += 1
+        
+        self.message_user(request, f"已从{count}个未解决问题创建FAQ")
+    
+    mark_as_resolved.short_description = "标记为已解决"
+    create_faq.short_description = "从选中问题创建FAQ"
 
 # 自定义管理仪表板
 class CustomAdminSite(admin.AdminSite):
@@ -351,10 +511,17 @@ class CustomAdminSite(admin.AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('custom-dashboard/', self.admin_view(admin_dashboard), name='admin_dashboard')
+            path('dashboard/', self.admin_view(admin_dashboard), name='dashboard'),
         ]
         return custom_urls + urls
-
+    
+    def get_model_url(self, app_label, model_name, obj_id=None, action='change'):
+        """获取模型URL的通用方法"""
+        url = f'/{self.name}/{app_label}/{model_name}/'
+        if obj_id is not None:
+            url += f'{obj_id}/{action}/'
+        return url
+    
     def get_app_list(self, request, app_label=None):
         # 获取原始应用列表
         app_list = super().get_app_list(request, app_label)
@@ -367,30 +534,105 @@ class CustomAdminSite(admin.AdminSite):
         dashboard_app = {
             'name': '数据看板',
             'app_label': 'dashboard',
-            'app_url': self._get_admin_url('custom-dashboard'),
+            'app_url': self._get_admin_url('dashboard'),
             'has_module_perms': True,
             'models': [{
                 'name': '系统概览',
                 'object_name': 'dashboard',
-                'admin_url': self._get_admin_url('custom-dashboard'),
+                'admin_url': self._get_admin_url('dashboard'),
                 'view_only': True,
             }],
         }
         
-        # 将看板插入到应用列表最前面
-        return [dashboard_app] + app_list
+        # 定义应用分类
+        app_categories = {
+            'logs': {'name': '系统日志', 'order': 99},  # 放在最后
+            'interaction': {'name': '用户互动', 'order': 2},
+            'content': {'name': '内容管理', 'order': 1},
+            'user_management': {'name': '用户管理', 'order': 3}
+        }
+        
+        # 初始化分类应用
+        categorized_apps = {
+            category: {
+                'name': details['name'],
+                'app_label': category,
+                'app_url': '#',
+                'has_module_perms': True,
+                'models': [],
+                'order': details['order']
+            } for category, details in app_categories.items()
+        }
+        
+        # 模型分类规则
+        model_categorization = {
+            'logs': lambda name: 'log' in name or 'adminlog' in name or 'logentry' in name,
+            'interaction': lambda name: 'comment' in name or 'chatmessage' in name or 'download' in name,
+            'content': lambda name: 'music' in name and 'download' not in name,
+            'user_management': lambda name: 'user' in name or 'profile' in name or 'group' in name
+        }
+        
+        # 整理应用列表
+        remaining_apps = []
+        for app in app_list:
+            models_to_remove = []
+            for model in app.get('models', []):
+                object_name = model.get('object_name', '').lower()
+                
+                # 将模型放入相应分类
+                categorized = False
+                for category, match_func in model_categorization.items():
+                    if match_func(object_name):
+                        categorized_apps[category]['models'].append(model)
+                        models_to_remove.append(model)
+                        categorized = True
+                        break
+                
+                if not categorized:
+                    # 保留未分类的模型
+                    pass
+            
+            # 从原应用中移除已分类的模型
+            for model in models_to_remove:
+                app['models'].remove(model)
+            
+            # 保留未分类的应用
+            if app.get('models'):
+                remaining_apps.append(app)
+        
+        # 构建最终的导航结构
+        result = [dashboard_app]
+        
+        # 按顺序添加有内容的分类
+        for category, app_info in sorted(categorized_apps.items(), key=lambda x: x[1]['order']):
+            if app_info['models']:
+                result.append(app_info)
+        
+        # 添加未分类的应用
+        result.extend(remaining_apps)
+        
+        return result
 
     def _get_admin_url(self, name):
         return f'/{self.name}/{name}/'
 
 # 注册Django默认的User和Group模型
-admin_site = CustomAdminSite(name='music_admin')
+admin_site = CustomAdminSite(name='music-admin')
 
-# 注册模型到自定义管理站点
-admin_site.register(Music, MusicAdmin)
-admin_site.register(Comment, CommentAdmin)
-admin_site.register(Profile, ProfileAdmin)
-admin_site.register(AdminLog, AdminLogAdmin)
-admin_site.register(MusicDownload, MusicDownloadAdmin)
-admin_site.register(User)
-admin_site.register(Group)
+# 使用字典批量注册模型到自定义管理站点
+admin_models = {
+    Music: MusicAdmin,
+    Comment: CommentAdmin,
+    Profile: ProfileAdmin,
+    AdminLog: AdminLogAdmin,
+    MusicDownload: MusicDownloadAdmin,
+    ChatMessage: ChatMessageAdmin,
+    FAQEntry: FAQEntryAdmin,
+    UnknownQuery: UnknownQueryAdmin,
+    User: admin.ModelAdmin,  # 使用默认ModelAdmin
+    Group: admin.ModelAdmin   # 使用默认ModelAdmin
+}
+
+# 批量注册所有模型
+for model, admin_class in admin_models.items():
+    admin_site.register(model, admin_class)
