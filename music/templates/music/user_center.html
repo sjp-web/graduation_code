@@ -1,0 +1,601 @@
+{% extends 'music/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}用户中心{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- 用户中心标题 -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-user-circle me-2"></i>用户中心
+                </h1>
+                <p class="text-muted">管理您的个人资料、音乐和安全设置</p>
+            </div>
+
+            <!-- 用户头像与基本信息卡片 -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="me-4">
+                            {% if user_profile.avatar %}
+                            <img src="{{ user_profile.avatar.url }}" 
+                                 class="rounded-circle img-thumbnail" 
+                                 alt="用户头像"
+                                 style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 120px; height: 120px;">
+                                <i class="fas fa-user fa-3x"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h2 class="h3 mb-1">
+                                {% if user_profile.nickname %}
+                                {{ user_profile.nickname }}
+                                {% else %}
+                                {{ user.username }}
+                                {% endif %}
+                            </h2>
+                            <p class="text-muted mb-1">@{{ user.username }}</p>
+                            <p class="text-muted mb-2">
+                                {% if user_profile.location %}
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ user_profile.location }}
+                                {% endif %}
+                                {% if user_profile.website %}
+                                {% if user_profile.location %} · {% endif %}
+                                <i class="fas fa-globe me-1"></i><a href="{{ user_profile.website }}" target="_blank" class="text-muted">个人网站</a>
+                                {% endif %}
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2">{{ user_songs.count }} 首音乐</span>
+                                <span class="badge bg-success me-2">{{ user_comments.count }} 条评论</span>
+                                <span class="badge bg-info">注册于 {{ user.date_joined|date:"Y-m-d" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页导航 -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-0">
+                    <ul class="nav nav-tabs nav-fill" id="userCenterTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" 
+                                    type="button" role="tab" aria-controls="profile" aria-selected="true">
+                                <i class="fas fa-user me-2"></i>个人资料
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="music-tab" data-bs-toggle="tab" data-bs-target="#music" 
+                                    type="button" role="tab" aria-controls="music" aria-selected="false">
+                                <i class="fas fa-music me-2"></i>我的音乐
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" 
+                                    type="button" role="tab" aria-controls="comments" aria-selected="false">
+                                <i class="fas fa-comments me-2"></i>我的评论
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" 
+                                    type="button" role="tab" aria-controls="security" aria-selected="false">
+                                <i class="fas fa-shield-alt me-2"></i>账号安全
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 标签页内容 -->
+            <div class="tab-content" id="userCenterTabContent">
+                <!-- 个人资料标签页 -->
+                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-edit me-2"></i>编辑个人资料
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="profile_form">
+                                
+                                <!-- 分区：基本信息 -->
+                                <div class="mb-4">
+                                    <h4 class="text-primary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-id-card me-2"></i>基本信息
+                                    </h4>
+                                    
+                                    <div class="row">
+                                        <!-- 昵称 -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ profile_form.nickname.id_for_label }}" class="form-label">
+                                                <strong>{{ profile_form.nickname.label }}</strong>
+                                            </label>
+                                            {{ profile_form.nickname|add_class:"form-control" }}
+                                            {% if profile_form.nickname.help_text %}
+                                            <div class="form-text">{{ profile_form.nickname.help_text }}</div>
+                                            {% endif %}
+                                            {% for error in profile_form.nickname.errors %}
+                                            <div class="alert alert-danger mt-2">
+                                                {{ error }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        <!-- 邮箱 -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ profile_form.email.id_for_label }}" class="form-label">
+                                                <strong>{{ profile_form.email.label }}</strong>
+                                            </label>
+                                            {{ profile_form.email|add_class:"form-control" }}
+                                            {% if profile_form.email.help_text %}
+                                            <div class="form-text">{{ profile_form.email.help_text }}</div>
+                                            {% endif %}
+                                            {% for error in profile_form.email.errors %}
+                                            <div class="alert alert-danger mt-2">
+                                                {{ error }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 分区：联系方式 -->
+                                <div class="mb-4">
+                                    <h4 class="text-primary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-map-marked-alt me-2"></i>联系方式
+                                    </h4>
+                                    
+                                    <div class="row">
+                                        <!-- 位置 -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ profile_form.location.id_for_label }}" class="form-label">
+                                                <strong>{{ profile_form.location.label }}</strong>
+                                            </label>
+                                            {{ profile_form.location|add_class:"form-control" }}
+                                            {% if profile_form.location.help_text %}
+                                            <div class="form-text">{{ profile_form.location.help_text }}</div>
+                                            {% endif %}
+                                            {% for error in profile_form.location.errors %}
+                                            <div class="alert alert-danger mt-2">
+                                                {{ error }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        <!-- 个人网站 -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ profile_form.website.id_for_label }}" class="form-label">
+                                                <strong>{{ profile_form.website.label }}</strong>
+                                            </label>
+                                            {{ profile_form.website|add_class:"form-control" }}
+                                            {% if profile_form.website.help_text %}
+                                            <div class="form-text">{{ profile_form.website.help_text }}</div>
+                                            {% endif %}
+                                            {% for error in profile_form.website.errors %}
+                                            <div class="alert alert-danger mt-2">
+                                                {{ error }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 分区：个人介绍 -->
+                                <div class="mb-4">
+                                    <h4 class="text-primary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-user-edit me-2"></i>个人介绍
+                                    </h4>
+                                    
+                                    <!-- 个人简介部分 -->
+                                    <div class="mb-3">
+                                        <label for="{{ profile_form.bio.id_for_label }}" class="form-label">
+                                            <strong>{{ profile_form.bio.label }}</strong>
+                                        </label>
+                                        {{ profile_form.bio|add_class:"form-control" }}
+                                        {% if profile_form.bio.help_text %}
+                                        <div class="form-text">{{ profile_form.bio.help_text }}</div>
+                                        {% endif %}
+                                        {% for error in profile_form.bio.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ error }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <!-- 分区：头像 -->
+                                <div class="mb-4">
+                                    <h4 class="text-primary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-portrait me-2"></i>头像设置
+                                    </h4>
+                                    
+                                    <div class="d-flex flex-column align-items-center">
+                                        <!-- 当前头像预览 -->
+                                        <div class="mb-3 text-center">
+                                            {% if user_profile.avatar %}
+                                            <img src="{{ user_profile.avatar.url }}" 
+                                                class="rounded-circle img-thumbnail mb-2" 
+                                                alt="当前头像"
+                                                style="width: 150px; height: 150px; object-fit: cover; margin-bottom: 10px;">
+                                            <p class="text-muted small">当前头像</p>
+                                            {% else %}
+                                            <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center mx-auto mb-2" 
+                                                style="width: 150px; height: 150px;">
+                                                <i class="fas fa-user fa-4x text-secondary"></i>
+                                            </div>
+                                            <p class="text-muted small">未设置头像</p>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- 自定义文件上传按钮 -->
+                                        <div class="mb-2">
+                                            <div class="custom-file-upload">
+                                                <button type="button" class="btn btn-outline-primary" id="avatarBtn">
+                                                    <i class="fas fa-upload me-2"></i>选择新头像
+                                                </button>
+                                                <input type="file" id="{{ profile_form.avatar.id_for_label }}" name="{{ profile_form.avatar.html_name }}" class="d-none" accept="image/jpeg,image/png">
+                                                <span id="selected-file" class="ms-2 text-muted small"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if profile_form.avatar.help_text %}
+                                        <div class="form-text text-center">{{ profile_form.avatar.help_text }}</div>
+                                        {% endif %}
+                                        
+                                        {% for error in profile_form.avatar.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ error }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2 justify-content-center mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                                        <i class="fas fa-save me-2"></i>保存更改
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary btn-lg px-4">
+                                        <i class="fas fa-undo me-2"></i>重置
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- JavaScript代码处理文件上传 -->
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const avatarInput = document.getElementById('{{ profile_form.avatar.id_for_label }}');
+                                    const avatarBtn = document.getElementById('avatarBtn');
+                                    const selectedFile = document.getElementById('selected-file');
+                                    
+                                    avatarBtn.addEventListener('click', function() {
+                                        avatarInput.click();
+                                    });
+                                    
+                                    avatarInput.addEventListener('change', function() {
+                                        if (this.files && this.files[0]) {
+                                            let fileName = this.files[0].name;
+                                            selectedFile.textContent = fileName;
+                                            
+                                            // 显示文件预览
+                                            const reader = new FileReader();
+                                            reader.onload = function(e) {
+                                                const previewImg = document.querySelector('.rounded-circle.img-thumbnail');
+                                                if (previewImg) {
+                                                    previewImg.src = e.target.result;
+                                                }
+                                            }
+                                            reader.readAsDataURL(this.files[0]);
+                                        }
+                                    });
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的音乐标签页 -->
+                <div class="tab-pane fade" id="music" role="tabpanel" aria-labelledby="music-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-music me-2"></i>我的音乐（共{{ user_songs|length }}首）
+                            </h3>
+                            <a href="{% url 'upload_music' %}" class="btn btn-light btn-sm">
+                                <i class="fas fa-upload me-1"></i>上传新音乐
+                            </a>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if user_songs %}
+                            <div class="list-group list-group-flush">
+                                {% for song in user_songs %}
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3" style="width: 60px; height: 60px;">
+                                            {% if song.cover_image %}
+                                            <img src="{{ song.cover_image.url }}" alt="{{ song.title }}" 
+                                                 class="img-thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center h-100">
+                                                <i class="fas fa-music"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 me-3">
+                                            <h5 class="mb-1">
+                                                <a href="{% url 'music_detail' song.id %}" class="text-decoration-none">
+                                                    {{ song.title }}
+                                                </a>
+                                            </h5>
+                                            <div class="d-flex small text-muted">
+                                                <span class="me-3">
+                                                    <i class="fas fa-play me-1"></i>{{ song.play_count }}次播放
+                                                </span>
+                                                <span class="me-3">
+                                                    <i class="fas fa-heart me-1"></i>{{ song.likes }}点赞
+                                                </span>
+                                                <span>
+                                                    <i class="fas fa-clock me-1"></i>{{ song.release_date|date:"Y-m-d" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="btn-group">
+                                            <a href="{% url 'download_music' song.id %}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'music_detail' song.id %}" 
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-music fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">您还没有上传任何音乐</p>
+                                <a href="{% url 'upload_music' %}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-upload me-1"></i>上传音乐
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <!-- 在音乐列表底部添加分页 -->
+                            {% if music_page_obj.paginator.num_pages > 1 %}
+                            <nav class="p-3">
+                                <ul class="pagination justify-content-center">
+                                    {% if music_page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?music_page={{ music_page_obj.previous_page_number }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in music_page_obj.paginator.page_range %}
+                                    <li class="page-item {% if num == music_page_obj.number %}active{% endif %}">
+                                        <a class="page-link" href="?music_page={{ num }}">{{ num }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    
+                                    {% if music_page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?music_page={{ music_page_obj.next_page_number }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的评论标签页 -->
+                <div class="tab-pane fade" id="comments" role="tabpanel" aria-labelledby="comments-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-comments me-2"></i>我的评论（共{{ user_comments|length }}条）
+                            </h3>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if user_comments %}
+                            <div class="list-group list-group-flush">
+                                {% for comment in user_comments %}
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <a href="{% url 'music_detail' comment.music.id %}" class="text-decoration-none fw-bold">
+                                                {{ comment.music.title }}
+                                            </a>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>{{ comment.created_at|date:"Y-m-d H:i" }}
+                                                
+                                                <!-- 仅在自己的评论中不显示评论者 -->
+                                                {% if user != comment.user %}
+                                                <span class="ms-2 text-primary">
+                                                    <i class="fas fa-user me-1"></i>
+                                                    {% if comment.user.profile.nickname %}
+                                                    {{ comment.user.profile.nickname }}
+                                                    {% else %}
+                                                    {{ comment.user.username }}
+                                                    {% endif %}
+                                                </span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.content }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">您还没有发表任何评论</p>
+                                <a href="{% url 'music_list' %}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-music me-1"></i>浏览音乐
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <!-- 在评论列表底部添加分页 -->
+                            {% if comments_page_obj.paginator.num_pages > 1 %}
+                            <nav class="p-3">
+                                <ul class="pagination justify-content-center">
+                                    {% if comments_page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?comments_page={{ comments_page_obj.previous_page_number }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in comments_page_obj.paginator.page_range %}
+                                    <li class="page-item {% if num == comments_page_obj.number %}active{% endif %}">
+                                        <a class="page-link" href="?comments_page={{ num }}">{{ num }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    
+                                    {% if comments_page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?comments_page={{ comments_page_obj.next_page_number }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 账号安全标签页 -->
+                <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-key me-2"></i>修改密码
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="password_form">
+                                
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">当前密码</label>
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="new_password1" class="form-label">新密码</label>
+                                    <input type="password" class="form-control" id="new_password1" name="new_password1" required>
+                                    <div class="form-text">密码必须包含至少8个字符，且不能过于简单</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="new_password2" class="form-label">确认新密码</label>
+                                    <input type="password" class="form-control" id="new_password2" name="new_password2" required>
+                                </div>
+                                
+                                <div class="d-flex gap-2 justify-content-center mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>修改密码
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="fas fa-undo me-2"></i>重置
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-shield-alt me-2"></i>账号安全
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="list-group">
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <div>
+                                        <h5 class="mb-1">账号创建时间</h5>
+                                        <p class="mb-0 text-muted">{{ user.date_joined|date:"Y-m-d H:i" }}</p>
+                                    </div>
+                                    <span class="badge bg-info">信息</span>
+                                </div>
+                                
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <div>
+                                        <h5 class="mb-1">上次登录时间</h5>
+                                        <p class="mb-0 text-muted">{{ user.last_login|date:"Y-m-d H:i" }}</p>
+                                    </div>
+                                    <span class="badge bg-info">信息</span>
+                                </div>
+                                
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <div>
+                                        <h5 class="mb-1">登出所有设备</h5>
+                                        <p class="mb-0 text-muted">这将使您在所有设备上退出登录</p>
+                                    </div>
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="form_type" value="logout_all">
+                                        <button type="submit" class="btn btn-danger btn-sm">登出所有设备</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 保持标签页状态（刷新页面后保持当前标签页）
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        
+        // 如果URL中有tab参数，激活对应标签页
+        if (activeTab) {
+            const tabToShow = document.getElementById(activeTab + '-tab');
+            if (tabToShow) {
+                const bsTab = new bootstrap.Tab(tabToShow);
+                bsTab.show();
+            }
+        }
+        
+        // 点击标签时更新URL，不刷新页面
+        const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(event) {
+                const id = event.target.id.replace('-tab', '');
+                const url = new URL(window.location);
+                url.searchParams.set('tab', id);
+                window.history.pushState({}, '', url);
+            });
+        });
+    });
+</script>
+{% endblock %} 

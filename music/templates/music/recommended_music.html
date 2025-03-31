@@ -1,0 +1,116 @@
+{% extends 'music/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}为你推荐{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'music_list' %}">
+                    <i class="fa-solid fa-compact-disc me-1"></i>音乐库
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fa-solid fa-star me-1"></i>为你推荐
+            </li>
+        </ol>
+    </nav>
+
+    <!-- 推荐标题 -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-primary">
+            <i class="fa-solid fa-star me-2"></i>为你推荐
+        </h1>
+        <p class="text-muted">
+            {% if user.is_authenticated %}
+            根据你的听歌习惯，为你精选以下音乐
+            {% else %}
+            为你精选一些优质音乐
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- 推荐音乐列表 -->
+    <div class="row g-4">
+        {% for music in recommended_music %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm hover-shadow-lg transition-all">
+                <!-- 封面图片 -->
+                <div class="position-relative">
+                    {% if music.cover_image %}
+                    <img src="{{ music.cover_image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ music.title }}"
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fa-solid fa-compact-disc fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <!-- 播放按钮 -->
+                    <div class="position-absolute bottom-0 end-0 m-3">
+                        <a href="{% url 'music_detail' music.id %}" 
+                           class="btn btn-primary btn-lg rounded-circle shadow">
+                            <i class="fa-solid fa-play"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 音乐信息 -->
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <a href="{% url 'music_detail' music.id %}" class="text-decoration-none stretched-link">
+                            {{ music.title }}
+                        </a>
+                    </h5>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user me-2 text-muted"></i>
+                            <span class="text-truncate">{{ music.artist }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-compact-disc me-2 text-muted"></i>
+                            <span class="text-truncate">{{ music.album }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                            <span>{{ music.release_date|date:"Y-m-d" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-file-audio me-1"></i>
+                            {{ music.audio_file.size|filesizeformat }}
+                        </small>
+                        <a href="{% url 'music_detail' music.id %}" 
+                           class="btn btn-sm btn-outline-primary">
+                            详情 <i class="fas fa-chevron-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-music fa-4x text-muted mb-3"></i>
+                    <h3 class="text-muted mb-4">暂无推荐音乐</h3>
+                    <a href="{% url 'music_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-compact-disc me-2"></i>浏览音乐库
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

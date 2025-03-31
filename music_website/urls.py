@@ -26,8 +26,8 @@ urlpatterns = [
     # 自定义音乐后台
     path('music-admin/', admin_site.urls),
     
-    # 默认Django admin后台
-    path('admin/', admin.site.urls),
+    # 默认Django admin后台 - 已移除以避免混淆
+    # path('admin/', admin.site.urls),
     
     # 主应用URLs
     path('', include('music.urls')),

@@ -7,30 +7,27 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
+import logging
 
 # 音乐上传表单
 class MusicForm(forms.ModelForm):
-    # 添加显式字段定义
-    title = forms.CharField(
-        label='歌曲标题',
-        widget=forms.TextInput(attrs={'placeholder': '请输入歌曲标题'})
-    )
-    artist = forms.CharField(
-        label='艺术家',
-        widget=forms.TextInput(attrs={'placeholder': '请输入艺术家名称'})
-    )
-    
     class Meta:
         model = Music
-        fields = ['title', 'artist', 'album', 'release_date', 'audio_file', 'lyrics', 'cover_image']
+        fields = ['title', 'artist', 'album', 'category', 'release_date', 'audio_file', 'lyrics', 'cover_image']
         labels = {
+            'title': '歌曲标题',
+            'artist': '艺术家',
             'album': '专辑名称',
+            'category': '音乐分类',
             'release_date': '发行日期',
             'audio_file': '音频文件',
             'lyrics': '歌词',
             'cover_image': '专辑封面'
         }
         widgets = {
+            'title': forms.TextInput(attrs={'placeholder': '请输入歌曲标题'}),
+            'artist': forms.TextInput(attrs={'placeholder': '请输入艺术家名称'}),
+            'category': forms.Select(attrs={'class': 'form-control form-control-lg'}),
             'audio_file': forms.FileInput(attrs={
                 'accept': '.mp3,.wav,.aac,.m4a',
                 'class': 'form-control form-control-lg'
@@ -40,7 +37,7 @@ class MusicForm(forms.ModelForm):
                 attrs={
                     'type': 'date',
                     'class': 'form-control form-control-lg',
-                    'placeholder': 'YYYY-MM-DD'
+                    'placeholder': '年-月-日'
                 }
             ),
             'lyrics': forms.Textarea(attrs={'rows': 4}),
@@ -50,26 +47,47 @@ class MusicForm(forms.ModelForm):
     def clean_audio_file(self):
         # 验证音频文件大小和类型
         audio_file = self.cleaned_data.get('audio_file')
-        if audio_file:
-            # 文件大小验证（最大20MB）
-            if audio_file.size > settings.MAX_UPLOAD_SIZE:
-                raise ValidationError('文件大小不能超过20MB')
+        if not audio_file:
+            return None
             
-            # 文件类型验证
-            content_type = audio_file.content_type
-            file_extension = audio_file.name.lower().split('.')[-1]
+        logger = logging.getLogger('music')
+        
+        # 文件大小验证（最大20MB）
+        if audio_file.size > settings.MAX_UPLOAD_SIZE:
+            logger.error(f"文件过大: {audio_file.name}, 大小: {audio_file.size}")
+            raise ValidationError('文件大小不能超过20MB')
+        
+        # 文件类型验证 - 详细记录信息
+        file_name = audio_file.name.lower()
+        file_extension = file_name.split('.')[-1]
+        content_type = audio_file.content_type
+        
+        # 记录上传文件信息到日志
+        logger.info(f"文件上传: 名称={file_name}, 扩展名={file_extension}, MIME类型={content_type}, 大小={audio_file.size}字节")
+        
+        # 检查扩展名
+        allowed_extensions = ['mp3', 'wav', 'aac', 'm4a']
+        if file_extension not in allowed_extensions:
+            logger.error(f"不支持的文件扩展名: {file_extension}")
+            raise ValidationError(f'不支持的文件格式: {file_extension}，只支持MP3、WAV、AAC和M4A格式')
             
-            # 检查文件扩展名
-            if file_extension not in ['mp3', 'wav', 'aac', 'm4a']:
-                raise ValidationError('只支持MP3、WAV、AAC和M4A格式')
-            
-            # 检查内容类型
-            if content_type not in settings.ALLOWED_AUDIO_TYPES:
-                # 对于M4A文件，特殊处理
-                if file_extension == 'm4a' and content_type in ['audio/mp4', 'audio/x-m4a']:
-                    return audio_file
-                raise ValidationError(f'不支持的文件格式: {content_type}')
-                
+        # 检查MIME类型（宽松验证）
+        allowed_mimetypes = [
+            'audio/mpeg',          # MP3
+            'audio/wav',           # WAV
+            'audio/aac',           # AAC
+            'audio/mp4',           # M4A (标准MIME类型)
+            'audio/x-m4a',         # M4A (某些系统使用)
+            'video/mp4',           # 某些系统将M4A识别为此类型
+            'audio/x-hx-aac-adts', # AAC变种
+            'application/octet-stream'  # 通用二进制流
+        ]
+        
+        # 使用宽松验证，只有在content_type存在且不在允许列表中时才记录警告
+        if content_type and content_type not in allowed_mimetypes:
+            logger.warning(f"不常见的MIME类型: {content_type}，但由于扩展名有效，仍然允许上传")
+        
+        # 通过所有验证
         return audio_file
 
     def clean_title(self):
@@ -125,17 +143,42 @@ class UserRegistrationForm(UserCreationForm):
 
 # 个人资料表单
 class ProfileForm(forms.ModelForm):
+    """个人资料编辑表单"""
+    email = forms.EmailField(
+        label='邮箱',
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control'}),
+        help_text='用于接收系统通知和找回密码'
+    )
+    
     class Meta:
         model = Profile
-        fields = ['avatar', 'bio']  # 头像和个人简介字段
+        fields = ['nickname', 'bio', 'avatar', 'location', 'website']
         widgets = {
-            'bio': forms.Textarea(attrs={'rows': 4}),
+            'nickname': forms.TextInput(attrs={'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'website': forms.URLInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'nickname': '昵称',
+            'bio': '个人简介',
+            'avatar': '头像',
+            'location': '所在地',
+            'website': '个人网站'
         }
         help_texts = {
-            'avatar': '支持格式：JPG/PNG，最大2MB',
-            'bio': '简短的个人介绍（最多500字）',
+            'nickname': '显示在您的个人主页和评论中的名称',
+            'bio': '简单介绍一下自己吧，不超过500字',
+            'location': '您所在的城市或地区，例如：北京、上海',
+            'website': '请输入完整网址，包括http://或https://'
         }
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.user:
+            self.fields['email'].initial = self.instance.user.email
+
     def clean_avatar(self):
         avatar = self.cleaned_data.get('avatar')
         if avatar:

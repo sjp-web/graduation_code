@@ -148,8 +148,8 @@ FILE_UPLOAD_HANDLERS = [
 PAGE_SIZE = 10
 
 # 允许的文件类型
-ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac', 'audio/mp4', 'audio/x-m4a']
 MAX_UPLOAD_SIZE = int(os.getenv('MAX_UPLOAD_SIZE', 20 * 1024 * 1024))  # 默认20MB
+ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/aac', 'audio/mp4', 'audio/x-m4a', 'video/mp4', 'audio/x-hx-aac-adts', 'application/octet-stream']
 
 # 安全设置
 SESSION_COOKIE_HTTPONLY = True
@@ -157,6 +157,11 @@ CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 两周
 
 # 根据环境配置日志
+# 确保日志文件目录存在
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -167,7 +172,7 @@ LOGGING = {
         'file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': os.getenv('LOG_FILE', os.path.join(BASE_DIR, 'logs/error.log')),
+            'filename': os.getenv('LOG_FILE', os.path.join(LOG_DIR, 'error.log')),
         },
     },
     'loggers': {
@@ -207,28 +212,6 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# 在现有配置下方添加
-LOGOUT_REDIRECT_URL = 'login'  # 双重保障
-
-# 在文件底部添加
-if DEBUG:
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'WARNING',
-            },
-        },
-        'loggers': {
-            'django': {
-                'handlers': ['console'],
-                'level': 'DEBUG',
-            },
-        },
-    }
-
 # 添加会话安全设置
 SESSION_COOKIE_SECURE = False  # 开发时设为False，生产环境应设为True
 CSRF_COOKIE_SECURE = False
@@ -244,12 +227,10 @@ JAZZMIN_SETTINGS = {
     "copyright": "音乐分享与管理平台 - 毕业设计作品",
     
     # UI设置
-    "show_ui_builder": True,
     "changeform_format": "horizontal_tabs",
     "topmenu_links": [
         {"name": "主页", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"name": "回到网站", "url": "/", "new_window": True},
-        {"name": "数据看板", "url": "/music-admin/custom-dashboard/", "permissions": ["auth.view_user"]},
     ],
     
     # 图标设置
@@ -263,12 +244,23 @@ JAZZMIN_SETTINGS = {
         "music.Profile": "fas fa-id-card",
         "music.AdminLog": "fas fa-clipboard-list",
         "music.MusicDownload": "fas fa-download",
+        "music.ChatMessage": "fas fa-comment-alt",
+        "admin.LogEntry": "fas fa-history",
+        "logs": "fas fa-clipboard-list",
+        "dashboard": "fas fa-chart-line",
+        "interaction": "fas fa-comments",
+        "content": "fas fa-folder-open",
+        "user_management": "fas fa-users"
     },
     
     # 模型显示顺序
     "order_with_respect_to": [
-        "music", 
+        "dashboard",
+        "content",
+        "interaction", 
+        "user_management",
         "auth",
+        "logs"
     ],
     
     # 自定义菜单项
@@ -284,22 +276,6 @@ JAZZMIN_SETTINGS = {
             "url": "/search/",
             "icon": "fas fa-search",
             "new_window": True
-        }, {
-            "name": "数据统计",
-            "url": "/statistics/",
-            "icon": "fas fa-chart-bar",
-            "new_window": True
-        }, {
-            "name": "个人资料",
-            "url": "/profile/",
-            "icon": "fas fa-user",
-            "new_window": True
-        }],
-        "music": [{
-            "name": "数据看板",
-            "url": "/music-admin/custom-dashboard/",  # 使用绝对URL路径
-            "icon": "fas fa-chart-line",
-            "permissions": ["auth.view_user"]
         }]
     }
 }

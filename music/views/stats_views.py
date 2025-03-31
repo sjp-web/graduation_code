@@ -1,11 +1,15 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Sum, Avg, F
 from django.utils import timezone
 from django.contrib.auth.models import User
-from ..models import Music, MusicDownload
+from ..models import Music, MusicDownload, Comment
+
+def is_staff(user):
+    return user.is_staff
 
 @login_required
+@user_passes_test(is_staff)
 def statistics_view(request):
     # 修改分类统计查询
     categories = Music.objects.values('category').annotate(
@@ -61,19 +65,24 @@ def statistics_view(request):
         
         daily_downloads.append(day_downloads)
     
+    # 用户统计数据
+    user_stats = {
+        'total_uploads': Music.objects.filter(uploaded_by=request.user).count(),
+        'total_comments': Comment.objects.filter(user=request.user).count(),
+        'recent_uploads': Music.objects.filter(uploaded_by=request.user).order_by('-release_date')[:5]
+    }
+    
+    # 全局统计数据
+    global_stats = {
+        'total_users': User.objects.count(),
+        'total_music': Music.objects.count(),
+        'popular_categories': Music.objects.values('category').annotate(count=Count('id')).order_by('-count')
+    }
+    
     stats = {
         'categories': list(categories),  # 转换为列表以便模板处理
-        'user_stats': {
-            'upload_count': Music.objects.filter(uploaded_by=request.user).count(),
-            'total_plays': Music.objects.filter(uploaded_by=request.user).aggregate(Sum('play_count'))['play_count__sum'] or 0,
-            'total_downloads': Music.objects.filter(uploaded_by=request.user).aggregate(Sum('download_count'))['download_count__sum'] or 0,
-            'recent_uploads': Music.objects.filter(uploaded_by=request.user).order_by('-release_date')[:5]
-        },
-        'global_stats': {
-            'total_users': User.objects.count(),
-            'total_music': Music.objects.count(),
-            'popular_categories': Music.objects.values('category').annotate(count=Count('id')).order_by('-count')[:3]
-        },
+        'user_stats': user_stats,
+        'global_stats': global_stats,
         # 新增下载量趋势数据
         'downloads_trend': {
             'total_downloads': total_downloads,

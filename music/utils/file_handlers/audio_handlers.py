@@ -14,7 +14,7 @@ def get_audio_file_path(instance, filename):
     # 获取文件扩展名
     ext = filename.split('.')[-1].lower()
     # 仅支持的音频格式
-    allowed_extensions = ['mp3', 'wav', 'ogg', 'flac']
+    allowed_extensions = ['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac']
     
     if ext not in allowed_extensions:
         # 默认返回mp3格式

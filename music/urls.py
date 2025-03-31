@@ -1,10 +1,11 @@
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
-from django.conf import settings
-
-# 导入视图函数 - 直接从views包导入
+from django.urls import path
 from .views import (
-    music_list, upload_music, music_detail, download_music,
+    music_views, user_views, search_views, 
+    stats_views, admin_views
+)
+
+# 从各个视图导入具体函数
+from .views import (
     register, login_view, profile_view, create_profile,
     music_search, search_suggestions,
     statistics_view, admin_dashboard,
@@ -12,23 +13,28 @@ from .views import (
 )
 
 urlpatterns = [
-    path('', music_list, name='music_list'),  # 确保根路径有处理视图
-    path('login/', login_view, name='login'),  # 登录页面
-    path('register/', register, name='register'),  # 用户注册页面
-    path('profile/', profile_view, name='profile'),  # 用户个人资料页面
-    path('upload/', upload_music, name='upload_music'),  # 上传音乐页面
-    path('logout/', 
-         auth_views.LogoutView.as_view(
-             next_page='/login/',  # 使用绝对路径
-             extra_context={'logout_message': '您已成功注销'}
-         ), 
-         name='logout'),
-    path('<int:music_id>/', music_detail, name='music_detail'),  # 音乐详细信息页面
-    path('profile/create/', create_profile, name='profile_creation'), # 创建用户个人资料页面
-    path('search/', music_search, name='music_search'),# 音乐搜索
-    path('api/search-suggestions/', search_suggestions, name='search_suggestions'),# 搜索建议
-    path('statistics/', statistics_view, name='statistics'),# 统计信息页面
-    path('download/<int:music_id>/', download_music, name='download_music'),
-    path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
+    # 用户相关路由
+    path('register/', register, name='register'),
+    path('login/', login_view, name='login'),
+    path('logout/', user_views.logout_view, name='logout'),
+    path('profile/<str:username>/', profile_view, name='profile'),
+    path('profile/edit/', user_views.edit_profile, name='edit_profile'),
+    path('profile/create/', create_profile, name='create_profile'),
+    path('user/center/', user_views.user_center, name='user_center'),
+    
+    # AI聊天机器人路由
     path('chat/ai/', chat_with_ai, name='chat_with_ai'),
+    
+    # 音乐相关路由
+    path('', music_views.music_list, name='music_list'),
+    path('upload/', music_views.upload_music, name='upload_music'),
+    path('music/<int:pk>/', music_views.music_detail, name='music_detail'),
+    path('music/<int:pk>/download/', music_views.download_music, name='download_music'),
+    path('music/<int:pk>/comment/', music_views.add_comment, name='add_comment'),
+    path('music/<int:pk>/delete/', music_views.delete_music, name='delete_music'),
+    path('recommended/', music_views.recommended_music, name='recommended_music'),
+    path('search/', music_search, name='music_search'),
+    path('search/suggestions/', search_suggestions, name='search_suggestions'),
+    path('statistics/', statistics_view, name='statistics'),
+    path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
 ]

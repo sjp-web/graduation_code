@@ -2,85 +2,97 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}个人资料{% endblock %}
+{% block title %}{{ user.username }}的个人资料{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- 个人资料标题 -->
-            <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary">
-                    <i class="fas fa-user-circle me-2"></i>个人资料
-                </h1>
-                <p class="text-muted">管理您的个人信息和音乐收藏</p>
-            </div>
-
-            <!-- 用户头像卡片 -->
-            <div class="card shadow-sm mb-4 text-center">
-                <div class="card-body py-4">
-                    <div class="mb-3">
-                        {% if user_profile.avatar %}
-                        <img src="{{ user_profile.avatar.url }}" 
-                             class="rounded-circle img-thumbnail" 
-                             alt="用户头像"
-                             style="width: 150px; height: 150px; object-fit: cover;">
-                        {% else %}
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" 
-                             style="width: 150px; height: 150px;">
-                            <i class="fas fa-user fa-4x"></i>
+    <div class="row">
+        <!-- 左侧个人信息卡片 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <!-- 头像 -->
+                    {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" 
+                         alt="用户头像" 
+                         class="rounded-circle mb-3"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3"
+                         style="width: 150px; height: 150px;">
+                        <i class="fas fa-user fa-4x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 用户信息 -->
+                    <h2 class="h4 mb-2">{{ user.profile.nickname|default:user.username }}</h2>
+                    <p class="text-muted mb-3">@{{ user.username }}</p>
+                    
+                    {% if user.profile.bio %}
+                    <p class="text-muted mb-3">{{ user.profile.bio }}</p>
+                    {% endif %}
+                    
+                    <!-- 联系信息 -->
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        {% if user.email %}
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            <span>{{ user.email }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.profile.location %}
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                            <span>{{ user.profile.location }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.profile.website %}
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-globe me-2 text-primary"></i>
+                            <a href="{{ user.profile.website }}" target="_blank" class="text-decoration-none">
+                                {{ user.profile.website }}
+                            </a>
                         </div>
                         {% endif %}
                     </div>
-                    <h3 class="h4 mb-1">{{ user.username }}</h3>
-                    {% if user_profile.bio %}
-                    <p class="text-muted mb-0">{{ user_profile.bio }}</p>
-                    {% else %}
-                    <p class="text-muted mb-0">暂无个人简介</p>
+                    
+                    <!-- 编辑按钮 -->
+                    {% if user == request.user %}
+                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i>编辑资料
+                    </a>
                     {% endif %}
                 </div>
             </div>
-
-            <!-- 个人资料表单 -->
-            <div class="card shadow-sm mb-5">
-                <div class="card-header bg-primary text-white py-3">
-                    <h2 class="h5 mb-0">
-                        <i class="fas fa-edit me-2"></i>编辑个人资料
-                    </h2>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">
-                                {{ field.label }}
-                            </label>
-                            {{ field|add_class:"form-control" }}
-                            {% if field.help_text %}
-                            <div class="form-text">{{ field.help_text }}</div>
-                            {% endif %}
-                            {% for error in field.errors %}
-                            <div class="alert alert-danger mt-2">
-                                {{ error }}
-                            </div>
-                            {% endfor %}
+            
+            <!-- 统计信息卡片 -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">统计信息</h3>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span>上传音乐</span>
+                            <span class="text-primary">{{ user_songs|length }}</span>
                         </div>
-                        {% endfor %}
-                        <div class="d-flex gap-2 justify-content-center mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>保存更改
-                            </button>
-                            <button type="reset" class="btn btn-outline-secondary">
-                                <i class="fas fa-undo me-2"></i>重置
-                            </button>
+                        <div class="d-flex justify-content-between">
+                            <span>评论数</span>
+                            <span class="text-primary">{{ user_comments|length }}</span>
                         </div>
-                    </form>
+                        <div class="d-flex justify-content-between">
+                            <span>加入时间</span>
+                            <span class="text-muted">{{ user.date_joined|date:"Y年m月d日" }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
+        </div>
+        
+        <!-- 右侧内容区域 -->
+        <div class="col-md-8">
             <!-- 我的音乐列表 -->
-            <div class="card shadow-sm">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white py-3">
                     <h2 class="h5 mb-0">
                         <i class="fas fa-music me-2"></i>我的音乐（共{{ user_songs|length }}首）
@@ -111,10 +123,13 @@
                                     </div>
                                 </div>
                                 <div class="btn-group">
-                                    <a href="{{ song.audio_file.url }}" 
-                                       class="btn btn-outline-primary btn-sm" 
-                                       download>
+                                    <a href="{% url 'download_music' song.id %}" 
+                                       class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-download"></i>
+                                    </a>
+                                    <a href="{% url 'music_detail' song.id %}" 
+                                       class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-eye"></i>
                                     </a>
                                 </div>
                             </div>
@@ -125,36 +140,62 @@
                     <div class="text-center py-5">
                         <i class="fas fa-music fa-3x text-muted mb-3"></i>
                         <p class="text-muted mb-0">您还没有上传任何音乐</p>
+                        {% if user == request.user %}
+                        <a href="{% url 'upload_music' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-upload me-1"></i>上传音乐
+                        </a>
+                        {% endif %}
                     </div>
                     {% endif %}
-
-                    <!-- 在音乐列表底部添加分页 -->
-                    {% if page_obj.paginator.num_pages > 1 %}
-                    <nav class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="fas fa-chevron-left"></i>
+                </div>
+            </div>
+            
+            <!-- 我的评论列表 -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-comments me-2"></i>我的评论（共{{ user_comments|length }}条）
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    {% if user_comments %}
+                    <div class="list-group list-group-flush">
+                        {% for comment in user_comments %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1 me-3">
+                                    <h5 class="mb-1">
+                                        <a href="{% url 'music_detail' comment.music.id %}" class="text-decoration-none">
+                                            {{ comment.music.title }}
+                                        </a>
+                                        {% if user != comment.user %}
+                                        <span class="badge bg-primary ms-2">
+                                            {% if comment.user.profile.nickname %}
+                                            {{ comment.user.profile.nickname }}
+                                            {% else %}
+                                            {{ comment.user.username }}
+                                            {% endif %}
+                                        </span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="mb-1">{{ comment.content }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>{{ comment.created_at|date:"Y-m-d H:i" }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'music_detail' comment.music.id %}" 
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-eye"></i>
                                 </a>
-                            </li>
-                            {% endif %}
-                            
-                            {% for num in page_obj.paginator.page_range %}
-                            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                            </li>
-                            {% endfor %}
-                            
-                            {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">您还没有发表任何评论</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
