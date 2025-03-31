@@ -6,7 +6,8 @@ from .user_views import (
     login_view, 
     profile_view, 
     create_profile,
-    custom_logout
+    custom_logout,
+    chat_with_ai
 )
 
 # 音乐相关视图

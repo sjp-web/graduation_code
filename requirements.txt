@@ -8,6 +8,7 @@ Pillow
 django-import-export
 python-dotenv
 xlwt  # 用于Excel文件导出
+psutil  # 用于系统资源监控
 
 # 开发与调试工具
 django-debug-toolbar==5.1.0

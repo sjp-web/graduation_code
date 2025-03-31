@@ -150,3 +150,18 @@ class AdminLog(models.Model):
     class Meta:
         verbose_name = '操作日志'
         verbose_name_plural = '系统日志'
+
+class ChatMessage(models.Model):
+    """AI聊天消息记录"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    message = models.TextField(verbose_name='用户消息')
+    response = models.TextField(verbose_name='AI回复')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    def __str__(self):
+        return f"{self.user.username}的对话 - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    class Meta:
+        verbose_name = 'AI聊天记录'
+        verbose_name_plural = 'AI聊天记录'
+        ordering = ['-created_at']

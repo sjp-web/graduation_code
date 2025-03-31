@@ -2,6 +2,23 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from music.models import Music, Profile, Comment
+from unittest.mock import MagicMock, patch
+import os
+from django.core.files.base import ContentFile
+
+class MockStorage:
+    """模拟Django存储系统以用于测试"""
+    def __init__(self):
+        self.exists_value = True
+        
+    def exists(self, name):
+        return self.exists_value
+        
+    def url(self, name):
+        return f"/media/{name}"
+        
+    def size(self, name):
+        return 1024 * 1024  # 1MB
 
 class UserViewsTest(TestCase):
     """测试用户相关视图"""
@@ -60,28 +77,39 @@ class MusicViewsTest(TestCase):
             password='testpassword'
         )
         
-        # 创建测试音乐
-        self.music = Music.objects.create(
-            title='测试音乐',
-            artist='测试艺术家',
-            album='测试专辑',
-            release_date='2023-01-01',
-            uploaded_by=self.user,
-            category='pop'
-        )
+        # 创建测试音乐 - 使用模拟文件
+        with patch('django.db.models.fields.files.FieldFile.url', return_value='/media/test.mp3'):
+            with patch('django.db.models.fields.files.FieldFile.size', return_value=1024 * 1024):
+                with patch('django.db.models.fields.files.FieldFile._require_file', return_value=None):
+                    self.music = Music.objects.create(
+                        title='测试音乐',
+                        artist='测试艺术家',
+                        album='测试专辑',
+                        release_date='2023-01-01',
+                        uploaded_by=self.user,
+                        category='pop'
+                    )
         
         # 登录用户
         self.client.login(username='testuser', password='testpassword')
-        
+    
     def test_music_list_view(self):
         """测试音乐列表视图"""
-        response = self.client.get(reverse('music_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '测试音乐')
-        
+        # 模拟文件相关方法
+        with patch('django.db.models.fields.files.FieldFile._require_file', return_value=None):
+            with patch('django.db.models.fields.files.FieldFile.url', return_value='/media/test.mp3'):
+                with patch('django.db.models.fields.files.FieldFile.size', return_value=1024 * 1024):
+                    response = self.client.get(reverse('music_list'))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, '测试音乐')
+    
     def test_music_detail_view(self):
         """测试音乐详情视图"""
-        response = self.client.get(reverse('music_detail', args=[self.music.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '测试音乐')
-        self.assertContains(response, '测试艺术家') 
+        # 模拟文件相关方法
+        with patch('django.db.models.fields.files.FieldFile._require_file', return_value=None):
+            with patch('django.db.models.fields.files.FieldFile.url', return_value='/media/test.mp3'):
+                with patch('django.db.models.fields.files.FieldFile.size', return_value=1024 * 1024):
+                    response = self.client.get(reverse('music_detail', args=[self.music.id]))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, '测试音乐')
+                    self.assertContains(response, '测试艺术家') 

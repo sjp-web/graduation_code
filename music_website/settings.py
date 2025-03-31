@@ -120,14 +120,16 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'zh-hans'  # 简体中文
 TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
-USE_TZ = True
+USE_TZ = False  # 禁用时区支持，解决数据库时区问题
 USE_L10N = False  # 禁用本地化格式
 DATE_INPUT_FORMATS = ['%Y-%m-%d']  # 明确指定日期格式
 
 # 静态文件设置
-STATIC_URL = os.getenv('STATIC_URL', '/static/')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'music/static')]
-STATIC_ROOT = os.path.join(BASE_DIR, os.getenv('STATIC_ROOT', 'staticfiles'))
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "music/static"),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # 媒体文件设置
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
@@ -247,6 +249,7 @@ JAZZMIN_SETTINGS = {
     "topmenu_links": [
         {"name": "主页", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"name": "回到网站", "url": "/", "new_window": True},
+        {"name": "数据看板", "url": "/music-admin/custom-dashboard/", "permissions": ["auth.view_user"]},
     ],
     
     # 图标设置
@@ -294,7 +297,7 @@ JAZZMIN_SETTINGS = {
         }],
         "music": [{
             "name": "数据看板",
-            "url": "admin_dashboard",  # 更新为正确的URL名称
+            "url": "/music-admin/custom-dashboard/",  # 使用绝对URL路径
             "icon": "fas fa-chart-line",
             "permissions": ["auth.view_user"]
         }]

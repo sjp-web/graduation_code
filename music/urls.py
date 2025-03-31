@@ -7,7 +7,8 @@ from .views import (
     music_list, upload_music, music_detail, download_music,
     register, login_view, profile_view, create_profile,
     music_search, search_suggestions,
-    statistics_view, admin_dashboard
+    statistics_view, admin_dashboard,
+    chat_with_ai
 )
 
 urlpatterns = [
@@ -29,4 +30,5 @@ urlpatterns = [
     path('statistics/', statistics_view, name='statistics'),# 统计信息页面
     path('download/<int:music_id>/', download_music, name='download_music'),
     path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('chat/ai/', chat_with_ai, name='chat_with_ai'),
 ]

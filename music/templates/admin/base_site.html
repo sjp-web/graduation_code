@@ -5,8 +5,68 @@
 
 {% block extrastyle %}
 {{ block.super }}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" type="text/css" href="{% static 'css/admin/custom_admin.css' %}">
+<style>
+/* 为确保dashboard页面正常显示添加的基础样式 */
+.info-box {
+    display: flex;
+    min-height: 80px;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    border-radius: 2px;
+    margin-bottom: 15px;
+}
+
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.col-12, .col-md-3, .col-md-4, .col-6 {
+    position: relative;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+@media (min-width: 768px) {
+    .col-md-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+    .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+}
+
+.col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.col-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+</style>
 {% endblock %}
 
 {% block branding %}

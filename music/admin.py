@@ -1,6 +1,6 @@
 # music/admin.py
 from django.contrib import admin
-from .models import Music, Comment, Profile, AdminLog, MusicDownload
+from .models import Music, Comment, Profile, AdminLog, MusicDownload, ChatMessage
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.html import format_html
@@ -151,15 +151,6 @@ class MusicDownloadAdmin(admin.ModelAdmin):
     list_per_page = 20
     readonly_fields = ('music', 'user', 'download_time', 'ip_address')
     actions = ['export_csv', 'export_excel']
-    
-    # 修正模板路径
-    change_list_template = 'admin/music/musicdownload/change_list.html'
-    
-    class Media:
-        css = {
-            'all': ('css/admin/custom_admin.css',)
-        }
-        js = ('js/admin/custom_admin.js',)
     
     def has_change_permission(self, request, obj=None):
         # 下载记录不应被修改
@@ -336,32 +327,52 @@ class MusicDownloadAdmin(admin.ModelAdmin):
         
         return super().changelist_view(request, extra_context=extra_context)
 
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('user', 'short_message', 'short_response', 'created_at')
+    list_filter = ('created_at', 'user')
+    search_fields = ('user__username', 'message', 'response')
+    date_hierarchy = 'created_at'
+    
+    def short_message(self, obj):
+        return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+    
+    def short_response(self, obj):
+        return obj.response[:50] + '...' if len(obj.response) > 50 else obj.response
+    
+    short_message.short_description = '用户消息'
+    short_response.short_description = 'AI回复'
+
 # 自定义管理仪表板
 class CustomAdminSite(admin.AdminSite):
-    name = 'music_admin'
+    name = 'music-admin'
     site_header = '音乐管理后台'
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('dashboard/', self.admin_view(admin_dashboard), name='dashboard')
+            path('custom-dashboard/', self.admin_view(admin_dashboard), name='admin_dashboard')
         ]
         return custom_urls + urls
 
-    def get_app_list(self, request):
+    def get_app_list(self, request, app_label=None):
         # 获取原始应用列表
-        app_list = super().get_app_list(request)
+        app_list = super().get_app_list(request, app_label)
+        
+        # 如果是特定应用标签的请求，不添加自定义看板
+        if app_label:
+            return app_list
         
         # 添加自定义看板应用
         dashboard_app = {
             'name': '数据看板',
             'app_label': 'dashboard',
-            'app_url': self._get_admin_url('dashboard'),
+            'app_url': self._get_admin_url('custom-dashboard'),
             'has_module_perms': True,
             'models': [{
                 'name': '系统概览',
                 'object_name': 'dashboard',
-                'admin_url': self._get_admin_url('dashboard'),
+                'admin_url': self._get_admin_url('custom-dashboard'),
                 'view_only': True,
             }],
         }
@@ -372,22 +383,14 @@ class CustomAdminSite(admin.AdminSite):
     def _get_admin_url(self, name):
         return f'/{self.name}/{name}/'
 
-@staff_member_required
-def admin_dashboard(request):
-    current_site = admin_site if 'music_admin' in request.path else admin.site
-    stats = {
-        'total_users': User.objects.count(),
-        'total_music': Music.objects.count(),
-        'new_users': User.objects.filter(date_joined__date=timezone.now().date()).count(),
-        'popular_music': Music.objects.order_by('-play_count')[:5],
-        'recent_comments': Comment.objects.select_related('user', 'music').order_by('-created_at')[:5]
-    }
-    return render(request, 'admin/dashboard.html', {
-        **current_site.each_context(request),
-        'stats': stats,
-        'title': '系统概览',
-        'opts': current_site._registry[Music].model._meta
-    })
-
 # 注册Django默认的User和Group模型
 admin_site = CustomAdminSite(name='music_admin')
+
+# 注册模型到自定义管理站点
+admin_site.register(Music, MusicAdmin)
+admin_site.register(Comment, CommentAdmin)
+admin_site.register(Profile, ProfileAdmin)
+admin_site.register(AdminLog, AdminLogAdmin)
+admin_site.register(MusicDownload, MusicDownloadAdmin)
+admin_site.register(User)
+admin_site.register(Group)

@@ -21,13 +21,19 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from music.admin import admin_site  # 仅导入admin_site
-from music.views import statistics_view  # 仅导入statistics_view
 
 urlpatterns = [
-    path('music-admin/', admin_site.urls),  # 自定义后台
-    path('admin/', admin.site.urls),        # 默认后台（可选）
-    path('', include('music.urls')),  # 确保主路径指向music应用
-    path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='auth')),  # 添加认证系统
+    # 自定义音乐后台
+    path('music-admin/', admin_site.urls),
+    
+    # 默认Django admin后台
+    path('admin/', admin.site.urls),
+    
+    # 主应用URLs
+    path('', include('music.urls')),
+    
+    # 认证系统
+    path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='auth')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 在DEBUG模式下添加Debug Toolbar URLs

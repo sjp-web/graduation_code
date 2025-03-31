@@ -12,6 +12,11 @@ from ..models import Music, Profile
 from ..forms import UserRegistrationForm, ProfileForm
 from ..utils.file_handlers.image_handlers import optimize_upload
 from uuid import uuid4
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+import json
+from music.models import ChatMessage
 
 # 用户注册视图
 def register(request):
@@ -91,4 +96,58 @@ def create_profile(request):
 
 def custom_logout(request):
     # 如果有自定义注销逻辑可能会覆盖设置
-    pass 
+    pass
+
+@login_required
+@csrf_exempt
+@require_POST
+def chat_with_ai(request):
+    """简单的AI聊天机器人API"""
+    try:
+        data = json.loads(request.body)
+        user_message = data.get('message', '')
+        
+        if not user_message:
+            return JsonResponse({'error': '消息不能为空'}, status=400)
+        
+        # 基于关键词的简单回复逻辑
+        response = generate_ai_response(user_message)
+        
+        # 保存对话记录
+        ChatMessage.objects.create(
+            user=request.user,
+            message=user_message,
+            response=response
+        )
+        
+        return JsonResponse({
+            'response': response,
+            'success': True
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def generate_ai_response(message):
+    """根据用户消息生成AI回复"""
+    message = message.lower()
+    
+    # 音乐相关问题
+    if '推荐' in message and ('歌' in message or '音乐' in message):
+        return '我推荐你听一些流行音乐，比如周杰伦的《晴天》或者Taylor Swift的新专辑。'
+    
+    elif '怎么上传' in message or '如何上传' in message:
+        return '在网站顶部导航栏找到"上传音乐"按钮，点击后填写歌曲信息并上传音频文件即可。'
+    
+    elif '下载' in message and ('歌' in message or '音乐' in message):
+        return '在歌曲详情页面，登录后可以看到下载按钮。点击即可下载音乐。'
+    
+    # 网站相关问题
+    elif '网站' in message and '介绍' in message:
+        return '这是一个音乐分享平台，你可以上传、分享和下载音乐作品，还可以与其他音乐爱好者互动。'
+    
+    elif '账号' in message or '注册' in message:
+        return '点击网站右上角的"注册"按钮，填写用户名、邮箱和密码即可创建账号。'
+    
+    # 默认回复
+    else:
+        return '抱歉，我无法理解您的问题。您可以询问关于音乐上传、下载、账号注册等问题，我会尽力回答。' 
