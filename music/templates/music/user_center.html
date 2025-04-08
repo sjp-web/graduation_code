@@ -598,4 +598,9 @@
         });
     });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- 引入页面组件 -->
+<script type="module" src="{% static 'js/pages/user-center-page.js' %}"></script>
 {% endblock %} 

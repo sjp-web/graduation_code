@@ -1,145 +1,181 @@
 {% extends 'music/base.html' %}
 {% load static %}
-{% load custom_filters %}
 
 {% block title %}音乐列表{% endblock %}
 
+{% block extra_head %}
+<!-- 引入现代化组件CSS -->
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<!-- 传递JSON数据给前端 -->
+<script>
+    window.musicAppData = {
+        music: JSON.parse('{{ music_json|escapejs }}'),
+        categories: JSON.parse('{{ categories_json|escapejs }}'),
+        currentSort: "{{ current_sort }}",
+        currentCategory: "{{ current_category }}",
+        currentQuery: "{{ current_query }}"
+    };
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <!-- 面包屑导航 -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page">
-                <i class="fa-solid fa-compact-disc me-1"></i>音乐库
-            </li>
-        </ol>
+<div class="container">
+    <!-- 现代化面包屑导航 -->
+    <nav class="breadcrumb-modern">
+        <a href="{% url 'music_list' %}"><i class="fas fa-home me-1"></i>首页</a>
+        <span class="separator"><i class="fas fa-chevron-right"></i></span>
+        <span class="current">音乐列表</span>
     </nav>
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="display-5 fw-bold text-primary">
-            <i class="fa-solid fa-compact-disc me-2"></i>音乐库
-        </h1>
-        {% if user.is_staff %}
-        <a href="{% url 'upload_music' %}" class="btn btn-primary btn-lg">
-            <i class="fa-solid fa-cloud-arrow-up me-2"></i>上传音乐
-        </a>
-        {% endif %}
+
+    <!-- 精选音乐头部 -->
+    <div class="music-collection-header">
+        <h1 class="heading-modern">精选音乐</h1>
+        <p>发现最优质的音乐，根据您的口味发掘更多可能，从流行、摇滚到古典，总有一款适合您</p>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for song in music %}
-        <div class="col">
-            <div class="card h-100 shadow-sm hover-shadow-lg transition-all">
-                {% if song.cover_image %}
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
-                     data-src="{{ song.cover_image.url }}" 
-                     class="card-img-top lazy" 
-                     alt="专辑封面" 
-                     style="height: 200px; object-fit: cover;">
-                {% else %}
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                     style="height: 200px;">
-                    <i class="fa-solid fa-record-vinyl fa-4x text-muted"></i>
+    <!-- Vue挂载点 -->
+    <div id="index-app">
+        <!-- 现代化过滤面板 -->
+        <div class="filter-panel-modern">
+            <form method="get" action="{% url 'music_list' %}" class="filter-form-modern">
+                <div class="form-group">
+                    <label for="query">搜索</label>
+                    <input type="text" id="query" name="query" class="form-control" placeholder="搜索歌曲、艺术家或专辑..." value="{{ current_query }}">
                 </div>
+                
+                <div class="form-group">
+                    <label for="category">分类</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">所有分类</option>
+                        {% for cat, cat_name in category_choices %}
+                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sort">排序方式</label>
+                    <select id="sort" name="sort" class="form-control">
+                        <option value="title" {% if current_sort == 'title' %}selected{% endif %}>按标题</option>
+                        <option value="artist" {% if current_sort == 'artist' %}selected{% endif %}>按艺术家</option>
+                        <option value="date" {% if current_sort == 'date' %}selected{% endif %}>按发行日期</option>
+                        <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>按热度</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i> 筛选
+                    </button>
+                    {% if current_query or current_category %}
+                    <a href="{% url 'music_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> 清除筛选
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 音乐列表容器 -->
+    <div class="music-grid-container">
+        <div class="music-grid-row">
+            {% for song in music %}
+            <div class="music-card-modern">
+                <div class="card-img-container">
+                    {% if song.cover_image %}
+                    <img src="{{ song.cover_image.url }}" alt="{{ song.title }}" class="card-img-top" loading="lazy">
+                    {% else %}
+                    <img src="{% static 'images/default-cover.svg' %}" alt="默认封面" class="card-img-top" loading="lazy">
+                    {% endif %}
+                    <div class="overlay"></div>
+                    <div class="play-btn" style="border: none !important; box-shadow: none !important; text-decoration: none !important;" onclick="window.location.href='{% url 'music_detail' song.id %}'">
+                        <i class="fas fa-play" style="margin: 0; padding: 0; border: none;"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ song.title }}</h5>
+                    <p class="card-subtitle">{{ song.artist }}</p>
+                    <div class="card-meta">
+                        <span class="card-category">{{ song.get_category_display }}</span>
+                        <span class="play-count">
+                            <i class="fas fa-headphones-alt"></i>
+                            {{ song.play_count }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-results">
+                <i class="fas fa-music"></i>
+                <h3>没有找到符合条件的音乐</h3>
+                <p>尝试调整您的搜索条件，或者浏览其他分类的音乐</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation" class="pagination-modern">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if current_query %}&query={{ current_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="First">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_query %}&query={{ current_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Previous">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
                 {% endif %}
                 
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <a href="{% url 'music_detail' song.id %}" class="text-decoration-none stretched-link">
-                            {{ song.title }}
-                        </a>
-                    </h5>
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-user me-2 text-muted"></i>
-                            <span class="text-truncate">{{ song.artist }}</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-compact-disc me-2 text-muted"></i>
-                            <span class="text-truncate">{{ song.album }}</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
-                            <span>{{ song.release_date|date:"Y-m-d" }}</span>
-                        </div>
-                    </div>
-                </div>
+                <li class="page-item active">
+                    <span class="page-link">
+                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
                 
-                <div class="card-footer bg-transparent">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            <i class="fas fa-file-audio me-1"></i>
-                            {{ song.audio_file.size|filesizeformat }}
-                        </small>
-                        <a href="{% url 'music_detail' song.id %}" 
-                           class="btn btn-sm btn-outline-primary">
-                            详情 <i class="fas fa-chevron-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-music fa-4x text-muted mb-3"></i>
-                    <h3 class="text-muted mb-4">音乐库空空如也</h3>
-                    <a href="{% url 'upload_music' %}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-cloud-upload-alt me-2"></i>立即上传
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_query %}&query={{ current_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Next">
+                        <i class="fas fa-angle-right"></i>
                     </a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_query %}&query={{ current_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Last">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
-
-    {% if is_paginated %}
-    <nav aria-label="音乐分页" class="mt-5">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-            {% endif %}
-            
-            {% for num in page_obj.paginator.page_range %}
-            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-            </li>
-            {% endfor %}
-            
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-</div>
-
-<!-- 添加懒加载脚本 -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const lazyImages = document.querySelectorAll('img.lazy');
     
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.remove('lazy');
-                observer.unobserve(img);
-            }
-        });
-    });
+    <!-- 回到顶部按钮 -->
+    <div class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+</div>
+{% endblock %}
 
-    lazyImages.forEach(img => imageObserver.observe(img));
-});
-</script>
+{% block extra_js %}
+<!-- 引入页面级Vue组件 -->
+<script type="module" src="{% static 'js/pages/index-page.js' %}"></script>
 {% endblock %}

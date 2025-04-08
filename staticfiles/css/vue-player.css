@@ -1,0 +1,167 @@
+/* Vue音乐播放器样式 */
+.vue-music-player {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.vue-music-player .player-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.vue-music-player .cover-image {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.vue-music-player .cover-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vue-music-player .track-info {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.vue-music-player .track-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vue-music-player .track-artist {
+  font-size: 0.9rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vue-music-player .player-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vue-music-player button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0d6efd;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.vue-music-player button:hover {
+  color: #0a58ca;
+}
+
+.vue-music-player .progress-container {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  gap: 8px;
+}
+
+.vue-music-player .time {
+  font-size: 0.75rem;
+  color: #6c757d;
+  width: 40px;
+  text-align: center;
+}
+
+.vue-music-player .progress {
+  flex-grow: 1;
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.vue-music-player .progress-bar {
+  background-color: #0d6efd;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.vue-music-player .volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vue-music-player .volume-slider {
+  width: 80px;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #e9ecef;
+  border-radius: 3px;
+  outline: none;
+}
+
+.vue-music-player .volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #0d6efd;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.vue-music-player .volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #0d6efd;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* 响应式样式适配 */
+@media (max-width: 768px) {
+  .vue-music-player .volume-control {
+    display: none; /* 在小屏幕上隐藏音量控制 */
+  }
+  
+  .vue-music-player .progress-container {
+    gap: 4px;
+  }
+  
+  .vue-music-player .time {
+    width: 35px;
+    font-size: 0.7rem;
+  }
+}
+
+/* 播放按钮动画效果 */
+.vue-music-player .play-btn:active i {
+  transform: scale(0.9);
+}
+
+/* 悬停效果 */
+.vue-music-player .progress:hover .progress-bar {
+  background-color: #0a58ca;
+} 

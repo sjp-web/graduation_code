@@ -1,0 +1,146 @@
+/* 搜索组件样式 */
+
+.vue-search-component {
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* 搜索框容器 */
+.search-container {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+/* 搜索建议下拉框 */
+.search-suggestions {
+  position: absolute;
+  width: 100%;
+  z-index: 1050;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-suggestions .list-group-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-suggestions .list-group-item:hover,
+.search-suggestions .list-group-item.active {
+  background-color: #f0f7ff;
+  color: #0d6efd;
+}
+
+/* 高级筛选区域 */
+.advanced-filters {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 10px;
+  border: 1px solid #dee2e6;
+}
+
+/* 搜索结果区域 */
+.results-list .card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.results-list .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.results-grid .card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.results-grid .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.object-fit-cover {
+  object-fit: cover;
+}
+
+/* 播放按钮悬停效果 */
+.btn-play {
+  opacity: 0.9;
+  transition: all 0.2s;
+}
+
+.btn-play:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* 加载效果 */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow-lg:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 播放控制进度条 */
+.progress {
+  height: 4px;
+  overflow: hidden;
+  background-color: #e9ecef;
+  border-radius: 2px;
+}
+
+.progress-bar {
+  background-color: #0d6efd;
+  height: 100%;
+  transition: width 0.1s linear;
+}
+
+/* 播放按钮动画 */
+.card .btn-primary {
+  transition: all 0.2s ease;
+}
+
+.card .btn-primary:hover {
+  transform: scale(1.1);
+}
+
+/* 搜索建议滚动条美化 */
+.search-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-suggestions::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .advanced-filters .row {
+    flex-direction: column;
+  }
+  
+  .results-grid .col-md-4 {
+    width: 50%;
+  }
+}
+
+@media (max-width: 576px) {
+  .results-grid .col-sm-6 {
+    width: 100%;
+  }
+} 

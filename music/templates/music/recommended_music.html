@@ -4,6 +4,139 @@
 
 {% block title %}为你推荐{% endblock %}
 
+{% block extra_head %}
+<style>
+    .recommendation-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .recommendation-header h1 {
+        color: #3498db;
+        margin-bottom: 10px;
+    }
+    
+    .recommendation-header p {
+        color: #777;
+    }
+    
+    .recommendation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+    
+    .recommendation-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    
+    .card-image {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .play-button {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+        background: #3498db;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: transform 0.2s;
+    }
+    
+    .play-button:hover {
+        transform: scale(1.1);
+    }
+    
+    .card-content {
+        padding: 20px;
+    }
+    
+    .music-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .music-info {
+        margin-bottom: 15px;
+    }
+    
+    .music-info div {
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .music-info i {
+        width: 20px;
+        margin-right: 8px;
+        color: #666;
+    }
+    
+    .card-footer {
+        padding: 15px 20px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .error-message {
+        text-align: center;
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .error-message i {
+        font-size: 40px;
+        color: #e0e0e0;
+        margin-bottom: 15px;
+    }
+    
+    .recommendation-reason {
+        background-color: rgba(52, 152, 219, 0.1);
+        border-left: 3px solid #3498db;
+        padding: 8px 12px;
+        margin-top: 10px;
+        border-radius: 3px;
+        font-size: 14px;
+        color: #555;
+        display: flex;
+        align-items: center;
+    }
+    
+    .recommendation-reason i {
+        color: #3498db;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <!-- 面包屑导航 -->
@@ -21,96 +154,63 @@
     </nav>
 
     <!-- 推荐标题 -->
-    <div class="text-center mb-5">
-        <h1 class="display-5 fw-bold text-primary">
-            <i class="fa-solid fa-star me-2"></i>为你推荐
-        </h1>
-        <p class="text-muted">
+    <div class="recommendation-header">
+        <h1><i class="fa-solid fa-star me-2"></i>为你推荐</h1>
+        <p>
             {% if user.is_authenticated %}
-            根据你的听歌习惯，为你精选以下音乐
+            {% if recommendation_type == "category" %}
+            我们根据您喜欢听"{{ favorite_category }}"类型的音乐，为您精选了以下推荐
+            {% elif recommendation_type == "popularity" %}
+            根据热度和大家的喜好，为您精选了以下热门音乐
+            {% elif recommendation_type == "latest" %}
+            为您推荐刚上传的最新音乐，希望您喜欢
             {% else %}
-            为你精选一些优质音乐
+            根据您的听歌习惯，为您精选了以下音乐
+            {% endif %}
+            {% else %}
+            为您精选了一些优质音乐，登录后可获取个性化推荐
             {% endif %}
         </p>
     </div>
 
-    <!-- 推荐音乐列表 -->
-    <div class="row g-4">
-        {% for music in recommended_music %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm hover-shadow-lg transition-all">
-                <!-- 封面图片 -->
-                <div class="position-relative">
-                    {% if music.cover_image %}
-                    <img src="{{ music.cover_image.url }}" 
-                         class="card-img-top" 
-                         alt="{{ music.title }}"
-                         style="height: 200px; object-fit: cover;">
-                    {% else %}
-                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                         style="height: 200px;">
-                        <i class="fa-solid fa-compact-disc fa-3x text-muted"></i>
-                    </div>
-                    {% endif %}
-                    <!-- 播放按钮 -->
-                    <div class="position-absolute bottom-0 end-0 m-3">
-                        <a href="{% url 'music_detail' music.id %}" 
-                           class="btn btn-primary btn-lg rounded-circle shadow">
-                            <i class="fa-solid fa-play"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 音乐信息 -->
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <a href="{% url 'music_detail' music.id %}" class="text-decoration-none stretched-link">
-                            {{ music.title }}
-                        </a>
-                    </h5>
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-user me-2 text-muted"></i>
-                            <span class="text-truncate">{{ music.artist }}</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-compact-disc me-2 text-muted"></i>
-                            <span class="text-truncate">{{ music.album }}</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
-                            <span>{{ music.release_date|date:"Y-m-d" }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-footer bg-transparent">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            <i class="fas fa-file-audio me-1"></i>
-                            {{ music.audio_file.size|filesizeformat }}
-                        </small>
-                        <a href="{% url 'music_detail' music.id %}" 
-                           class="btn btn-sm btn-outline-primary">
-                            详情 <i class="fas fa-chevron-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-music fa-4x text-muted mb-3"></i>
-                    <h3 class="text-muted mb-4">暂无推荐音乐</h3>
-                    <a href="{% url 'music_list' %}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-compact-disc me-2"></i>浏览音乐库
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    <!-- Vue 推荐应用挂载点 -->
+    <div id="vue-recommend-app"></div>
+    
+    <!-- 将推荐数据传递给前端 -->
+    <script id="recommended-music-json-data" type="application/json">
+        {{ recommended_music_json|safe }}
+    </script>
+    
+    <!-- 初始化数据 -->
+    <script>
+        // 推荐应用全局数据
+        window.recommendAppData = {
+            isStaff: {% if user.is_staff %}true{% else %}false{% endif %},
+            isAuthenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
+            username: "{{ user.username|default:'游客' }}",
+            recommendationType: "{{ recommendation_type|default:'default' }}"
+        };
+        
+        // 推荐事件总线
+        window.recommendEvents = {
+            listeners: {},
+            emit: function(event, data) {
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(function(callback) {
+                        callback(data);
+                    });
+                }
+            },
+            on: function(event, callback) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(callback);
+            }
+        };
+    </script>
+    
+    <!-- 引入页面组件 -->
+    <script type="module" src="{% static 'js/pages/recommended-page.js' %}"></script>
 </div>
 {% endblock %} 

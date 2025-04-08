@@ -1,7 +1,7 @@
 """
 Django settings for music_website project.
 
-简化版设置文件 - 适用于毕业设计
+简化版设置文件
 使用单一文件管理所有环境设置
 通过DEBUG=True/False切换开发/生产环境
 """
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'music.middleware.FileExceptionMiddleware',  # 添加我们的文件异常处理中间件
 ]
 
 # 针对不同环境设置特定中间件
@@ -125,11 +126,12 @@ USE_L10N = False  # 禁用本地化格式
 DATE_INPUT_FORMATS = ['%Y-%m-%d']  # 明确指定日期格式
 
 # 静态文件设置
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "music/static"),
+    os.path.join(BASE_DIR, 'staticfiles'),
+    os.path.join(BASE_DIR, 'static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 
 # 媒体文件设置
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
@@ -278,5 +280,10 @@ JAZZMIN_SETTINGS = {
             "new_window": True
         }]
     }
+}
+
+# 添加MIME类型配置
+MIME_TYPES = {
+    '.js': 'application/javascript',
 }
 

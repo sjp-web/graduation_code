@@ -12,13 +12,6 @@ def add_class(field, css_class):
     return field
 
 @register.filter
-def percentage(value, total):
-    try:
-        return "%.1f" % ((float(value) / float(total)) * 100)
-    except (ValueError, ZeroDivisionError):
-        return 0
-
-@register.filter
 def map_attribute(value, arg):
     """从字典列表或对象列表中提取指定属性"""
     if isinstance(value, list) and value:

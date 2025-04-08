@@ -4,6 +4,11 @@
 
 {% block title %}{{ music.title }} 详情{% endblock %}
 
+{% block extra_head %}
+<!-- 使用组件CSS -->
+<link rel="stylesheet" href="{% static 'css/components/player.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <!-- 返回导航 -->
@@ -13,6 +18,31 @@
             <li class="breadcrumb-item active" aria-current="page">{{ music.title }}</li>
         </ol>
     </nav>
+
+    <!-- Vue挂载点 -->
+    <div id="music-detail-app">
+        <!-- 如果Vue未加载，此区域将被Vue接管 -->
+    </div>
+
+    <!-- 音乐数据 -->
+    <script id="music-detail-data" type="application/json">
+        {
+            "music": {
+                "id": {{ music.id }},
+                "title": "{{ music.title|escapejs }}",
+                "artist": "{{ music.artist|escapejs }}",
+                "album": "{{ music.album|escapejs }}",
+                "release_date": "{{ music.release_date|date:'Y-m-d' }}",
+                "play_count": {{ music.play_count }},
+                "download_count": {{ music.download_count }},
+                "audio_url": "{{ music.audio_file.url }}",
+                "cover_image": "{% if music.cover_image %}{{ music.cover_image.url }}{% endif %}"
+            },
+            "lyrics": "{{ music.lyrics|escapejs }}",
+            "comments": {{ comments_json|safe }},
+            "currentUser": {% if user.is_authenticated %}{{ user_json|safe }}{% else %}null{% endif %}
+        }
+    </script>
 
     <!-- 音乐主信息卡片 -->
     <div class="card shadow-lg mb-5">
@@ -61,40 +91,22 @@
                         </span>
                     </div>
 
-                    <!-- 音频播放器 -->
+                    <!-- 音频播放器区域 -->
                     <div class="mt-auto">
-                        <div class="custom-audio-player">
-                            <audio id="audioPlayer" preload="metadata">
-                                <source src="{{ music.audio_file.url }}" type="audio/mpeg">
-                                <source src="{{ music.audio_file.url }}" type="audio/mp4">
-                                您的浏览器不支持音频播放
-                            </audio>
-                            
-                            <!-- 自定义控制界面 -->
-                            <div class="player-controls">
-                                <!-- 播放/暂停按钮 -->
-                                <button id="playPauseBtn" class="btn btn-link text-primary">
-                                    <i class="fas fa-play fa-lg"></i>
-                                </button>
-                                
-                                <!-- 进度条和时间显示 -->
-                                <div class="progress-container">
-                                    <div class="time current-time">0:00</div>
-                                    <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                    <div class="time duration">0:00</div>
-                                </div>
-                                
-                                <!-- 音量控制 -->
-                                <div class="volume-control">
-                                    <button id="muteBtn" class="btn btn-link text-primary">
-                                        <i class="fas fa-volume-up fa-lg"></i>
-                                    </button>
-                                    <input type="range" class="volume-slider" min="0" max="100" value="100">
-                                </div>
-                            </div>
+                        <!-- Vue音乐播放器容器 -->
+                        <div class="vue-player-container mb-3" 
+                             data-audio-url="{{ music.audio_file.url }}"
+                             data-title="{{ music.title }}"
+                             data-artist="{{ music.artist }}"
+                             {% if music.cover_image %}data-cover-image="{{ music.cover_image.url }}"{% endif %}>
                         </div>
+                        
+                        <!-- 保留一个隐藏的原生播放器用于兼容性 -->
+                        <audio id="fallbackPlayer" preload="metadata" class="w-100 d-none">
+                            <source src="{{ music.audio_file.url }}" type="audio/mpeg">
+                            <source src="{{ music.audio_file.url }}" type="audio/mp4">
+                            您的浏览器不支持音频播放
+                        </audio>
                     </div>
                 </div>
             </div>
@@ -201,242 +213,10 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<style>
-.lyrics-pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: 'Source Han Serif CN', 'Noto Serif SC', serif;
-    line-height: 1.8;
-    margin: 0;
-    padding: 1.5rem;
-    background: linear-gradient(180deg, #f8f9fa 0%, #fff 20%);
-    border-radius: 8px;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    counter-reset: line;
-    font-size: 1.1rem;
-    color: #444;
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.lyrics-pre::-webkit-scrollbar {
-    width: 6px;
-}
-
-.lyrics-pre::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.lyrics-pre::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-}
-
-.lyrics-pre::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* 为每行歌词添加行号 */
-.lyrics-pre span {
-    display: block;
-    position: relative;
-    padding-left: 2.5em;
-}
-
-.lyrics-pre span::before {
-    content: counter(line);
-    counter-increment: line;
-    position: absolute;
-    left: 0;
-    color: #999;
-    font-size: 0.9em;
-    width: 2em;
-    text-align: right;
-    padding-right: 0.5em;
-}
-
-/* 空行处理 */
-.lyrics-pre span:empty {
-    height: 1.2em;
-    display: block;
-}
-
-.custom-audio-player {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.player-controls {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.progress-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.progress {
-    flex: 1;
-    cursor: pointer;
-    background-color: #e9ecef;
-}
-
-.progress-bar {
-    transition: width 0.1s linear;
-}
-
-.time {
-    font-size: 0.875rem;
-    color: #6c757d;
-    min-width: 45px;
-}
-
-.volume-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.volume-slider {
-    width: 80px;
-    height: 6px;
-    -webkit-appearance: none;
-    background: #e9ecef;
-    border-radius: 3px;
-    outline: none;
-}
-
-.volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
-    background: #0d6efd;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.volume-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: #0d6efd;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-}
-
-.btn-link {
-    padding: 0;
-    color: #0d6efd;
-}
-
-.btn-link:hover {
-    color: #0a58ca;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const audio = document.getElementById('audioPlayer');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const muteBtn = document.getElementById('muteBtn');
-    const progress = document.querySelector('.progress');
-    const progressBar = document.querySelector('.progress-bar');
-    const volumeSlider = document.querySelector('.volume-slider');
-    const currentTimeDisplay = document.querySelector('.current-time');
-    const durationDisplay = document.querySelector('.duration');
-    
-    // 播放/暂停控制
-    playPauseBtn.addEventListener('click', function() {
-        if (audio.paused) {
-            audio.play();
-            playPauseBtn.innerHTML = '<i class="fas fa-pause fa-lg"></i>';
-        } else {
-            audio.pause();
-            playPauseBtn.innerHTML = '<i class="fas fa-play fa-lg"></i>';
-        }
-    });
-    
-    // 静音控制
-    muteBtn.addEventListener('click', function() {
-        audio.muted = !audio.muted;
-        if (audio.muted) {
-            muteBtn.innerHTML = '<i class="fas fa-volume-mute fa-lg"></i>';
-            volumeSlider.value = 0;
-        } else {
-            muteBtn.innerHTML = '<i class="fas fa-volume-up fa-lg"></i>';
-            volumeSlider.value = audio.volume * 100;
-        }
-    });
-    
-    // 音量控制
-    volumeSlider.addEventListener('input', function() {
-        const volume = this.value / 100;
-        audio.volume = volume;
-        if (volume === 0) {
-            muteBtn.innerHTML = '<i class="fas fa-volume-mute fa-lg"></i>';
-        } else if (volume < 0.5) {
-            muteBtn.innerHTML = '<i class="fas fa-volume-down fa-lg"></i>';
-        } else {
-            muteBtn.innerHTML = '<i class="fas fa-volume-up fa-lg"></i>';
-        }
-    });
-    
-    // 进度条控制
-    progress.addEventListener('click', function(e) {
-        const rect = this.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = pos * audio.duration;
-    });
-    
-    // 更新进度条和时间显示
-    audio.addEventListener('timeupdate', function() {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progressBar.style.width = percent + '%';
-        currentTimeDisplay.textContent = formatTime(audio.currentTime);
-    });
-    
-    // 加载完成后显示总时长
-    audio.addEventListener('loadedmetadata', function() {
-        durationDisplay.textContent = formatTime(audio.duration);
-    });
-    
-    // 播放结束时重置按钮状态
-    audio.addEventListener('ended', function() {
-        playPauseBtn.innerHTML = '<i class="fas fa-play fa-lg"></i>';
-    });
-    
-    // 格式化时间显示
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        seconds = Math.floor(seconds % 60);
-        return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-    }
-});
-</script>
-
-<!-- 添加结构化数据 -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "MusicRecording",
-  "name": "{{ music.title }}",
-  "byArtist": {
-    "@type": "MusicGroup",
-    "name": "{{ music.artist }}"
-  },
-  "duration": "PT3M30S",
-  "inAlbum": {
-    "@type": "MusicAlbum",
-    "name": "{{ music.album }}"
-  }
-}
-</script>
+{% block extra_js %}
+<!-- 加载页面级Vue应用 -->
+<script type="module" src="{% static 'js/pages/music-player-page.js' %}"></script>
+<script type="module" src="{% static 'js/pages/music-detail-page.js' %}"></script>
 {% endblock %}

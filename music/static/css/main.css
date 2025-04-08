@@ -1,0 +1,69 @@
+/* 音乐网站 CSS 主入口文件 */
+
+/* 导入基础样式 */
+@import 'common/base.css';
+
+/* 导入组件样式 */
+@import 'components/player.css';
+@import 'components/search.css';
+@import 'components/lyrics.css';
+@import 'components/music-card.css';
+
+/* 全局自定义样式 */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+footer {
+  flex-shrink: 0;
+}
+
+/* 额外覆盖样式 */
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #343a40;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #495057;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50px;
+  height: 4px;
+  background-color: #0d6efd;
+  border-radius: 2px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+} 

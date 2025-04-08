@@ -70,128 +70,32 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <div class="col-12">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-chart-pie me-2 text-primary"></i>
-                    核心指标
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-6">
-                        <div class="info-box">
-                            <span class="info-box-icon bg-info">
-                                <i class="fas fa-users"></i>
-                            </span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">总用户数</span>
-                                <span class="info-box-number">{{ stats.total_users }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="info-box">
-                            <span class="info-box-icon bg-success">
-                                <i class="fas fa-music"></i>
-                            </span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">总音乐数</span>
-                                <span class="info-box-number">{{ stats.total_music }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Vue组件挂载点 -->
+    <div id="admin-stats-app"></div>
 
-    <!-- 添加服务器状态监控 -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-server me-2"></i>服务器状态</h5>
-        </div>
-        <div class="card-body">
-            <div class="system-stats">
-                <!-- CPU使用率 -->
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <i class="fas fa-microchip me-1"></i> CPU使用率
-                    </div>
-                    <div class="stat-value">
-                        {{ system_stats.cpu_percent }}%
-                    </div>
-                    <div class="progress">
-                        {% with cpu_percent=system_stats.cpu_percent %}
-                        <div class="progress-bar 
-                            {% if cpu_percent < 60 %}progress-bar-success{% elif cpu_percent < 85 %}progress-bar-warning{% else %}progress-bar-danger{% endif %}"
-                            role="progressbar" 
-                            style="width: {{ cpu_percent }}%"
-                            aria-valuenow="{{ cpu_percent }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                        </div>
-                        {% endwith %}
-                    </div>
-                </div>
-                
-                <!-- 内存使用率 -->
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <i class="fas fa-memory me-1"></i> 内存使用
-                    </div>
-                    <div class="stat-value">
-                        {{ system_stats.memory_used }}GB/{{ system_stats.memory_total }}GB ({{ system_stats.memory_percent }}%)
-                    </div>
-                    <div class="progress">
-                        {% with memory_percent=system_stats.memory_percent %}
-                        <div class="progress-bar 
-                            {% if memory_percent < 60 %}progress-bar-success{% elif memory_percent < 85 %}progress-bar-warning{% else %}progress-bar-danger{% endif %}"
-                            role="progressbar" 
-                            style="width: {{ memory_percent }}%"
-                            aria-valuenow="{{ memory_percent }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                        </div>
-                        {% endwith %}
-                    </div>
-                </div>
-                
-                <!-- 磁盘使用率 -->
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <i class="fas fa-hdd me-1"></i> 磁盘使用
-                    </div>
-                    <div class="stat-value">
-                        {{ system_stats.disk_used }}GB/{{ system_stats.disk_total }}GB ({{ system_stats.disk_percent }}%)
-                    </div>
-                    <div class="progress">
-                        {% with disk_percent=system_stats.disk_percent %}
-                        <div class="progress-bar 
-                            {% if disk_percent < 70 %}progress-bar-success{% elif disk_percent < 90 %}progress-bar-warning{% else %}progress-bar-danger{% endif %}"
-                            role="progressbar" 
-                            style="width: {{ disk_percent }}%"
-                            aria-valuenow="{{ disk_percent }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                        </div>
-                        {% endwith %}
-                    </div>
-                </div>
-                
-                <!-- 网络使用情况 -->
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <i class="fas fa-network-wired me-1"></i> 网络流量
-                    </div>
-                    <div class="stat-value">
-                        接收: {{ system_stats.net_recv }}MB | 发送: {{ system_stats.net_sent }}MB
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 初始统计数据 -->
+    <script id="initial-stats-data" type="application/json">
+        {
+            "userStats": {
+                "totalUsers": {{ stats.total_users }},
+                "newUsersToday": {{ stats.new_users_today }},
+                "activeUsersToday": {{ stats.active_users_today }},
+                "userGrowth": {{ user_growth_json|safe }},
+                "activeUsers": {{ active_hours_json|safe }}
+            },
+            "musicStats": {
+                "totalSongs": {{ stats.total_music }},
+                "totalPlays": {{ stats.total_plays }},
+                "totalDownloads": {{ stats.total_downloads }},
+                "musicActivity": {{ music_activity_json|safe }}
+            },
+            "systemStats": {{ system_stats_json|safe }},
+            "topItems": {
+                "songs": {{ top_songs_json|safe }},
+                "users": {{ top_users_json|safe }}
+            }
+        }
+    </script>
 </div>
 {% endblock %}
 
@@ -211,4 +115,16 @@
         </ol>
     </nav>
 </div>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<!-- 引用页面级组件 -->
+<script type="module" src="{% static 'js/pages/admin-stats-page.js' %}"></script>
 {% endblock %} 

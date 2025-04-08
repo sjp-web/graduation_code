@@ -16,10 +16,10 @@ def audio_upload_path(instance, filename):
     return os.path.join('music', filename)
 
 class Music(models.Model):
-    title = models.CharField(max_length=200, verbose_name='标题')
-    artist = models.CharField(max_length=100, verbose_name='艺术家')
+    title = models.CharField(max_length=200, verbose_name='标题', db_index=True)
+    artist = models.CharField(max_length=100, verbose_name='艺术家', db_index=True)
     album = models.CharField(max_length=100, verbose_name='专辑')
-    release_date = models.DateField(verbose_name='发行日期')
+    release_date = models.DateField(verbose_name='发行日期', db_index=True)
     audio_file = models.FileField(upload_to=audio_upload_path, verbose_name='音频文件')
     cover_image = models.ImageField(
         upload_to='covers/%Y/%m/%d/',
@@ -30,14 +30,14 @@ class Music(models.Model):
     )
     lyrics = models.TextField(blank=True, null=True, verbose_name='歌词')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='上传者')
-    play_count = models.PositiveIntegerField(default=0, verbose_name='播放量')
+    play_count = models.PositiveIntegerField(default=0, verbose_name='播放量', db_index=True)
     likes = models.PositiveIntegerField(default=0, verbose_name='点赞数')
     is_original = models.BooleanField(default=False, verbose_name='是否原创')
     category = models.CharField(max_length=20, choices=(
         ('pop', '流行'),
         ('rock', '摇滚'),
         ('classical', '古典')
-    ), default='pop', verbose_name='分类')
+    ), default='pop', verbose_name='分类', db_index=True)
     download_count = models.PositiveIntegerField(default=0, verbose_name='下载次数')
 
     def __str__(self):

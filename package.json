@@ -1,0 +1,17 @@
+{
+  "name": "music-player-frontend",
+  "version": "1.0.0",
+  "description": "音乐播放器前端构建",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "vite": "^4.4.9"
+  }
+} 

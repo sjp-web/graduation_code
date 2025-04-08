@@ -33,8 +33,13 @@ urlpatterns = [
     path('music/<int:pk>/comment/', music_views.add_comment, name='add_comment'),
     path('music/<int:pk>/delete/', music_views.delete_music, name='delete_music'),
     path('recommended/', music_views.recommended_music, name='recommended_music'),
+    
+    # 搜索相关路由
     path('search/', music_search, name='music_search'),
     path('search/suggestions/', search_suggestions, name='search_suggestions'),
+    path('api/years/', search_views.years_api, name='years_api'),
+    
+    # 统计和管理路由
     path('statistics/', statistics_view, name='statistics'),
     path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
 ]

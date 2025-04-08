@@ -8,6 +8,8 @@ from uuid import uuid4
 from django.db.models import Count, Q, F
 from django.utils import timezone
 from datetime import timedelta
+import json
+import sys
 
 from ..models import Music, Comment, MusicDownload, PlayHistory
 from ..forms import MusicForm, CommentForm
@@ -19,16 +21,82 @@ def is_staff(user):
 # 音乐列表视图
 @login_required
 def music_list(request):
-    # 使用select_related优化查询，减少数据库访问次数
-    music_list = Music.objects.select_related('uploaded_by').order_by('-release_date')
-    paginator = Paginator(music_list, 12)  # 每页显示12条记录
-    page = request.GET.get('page')
-    music = paginator.get_page(page)
-    return render(request, 'music/music_list.html', {
-        'music': music,
+    # 获取查询参数
+    query = request.GET.get('query', '')
+    category = request.GET.get('category', '')
+    sort = request.GET.get('sort', 'title')
+    
+    # 构建基础查询集，使用select_related减少数据库查询
+    music_query = Music.objects.select_related('uploaded_by')
+    
+    # 应用过滤条件
+    if query:
+        music_query = music_query.filter(
+            Q(title__icontains=query) |
+            Q(artist__icontains=query) |
+            Q(album__icontains=query)
+        )
+    
+    if category:
+        music_query = music_query.filter(category=category)
+    
+    # 应用排序
+    sort_mapping = {
+        'title': 'title',
+        'artist': 'artist',
+        'date': '-release_date',
+        'popularity': '-play_count'
+    }
+    music_query = music_query.order_by(sort_mapping.get(sort, 'title'))
+    
+    # 分页处理
+    paginator = Paginator(music_query, 12)  # 每页显示12条记录
+    page = request.GET.get('page', 1)
+    music_page = paginator.get_page(page)
+    
+    # 获取所有分类（定义分类选项和对应的显示名称）
+    category_choices = [
+        ('pop', '流行'),
+        ('rock', '摇滚'),
+        ('classical', '古典')
+    ]
+    
+    # 只序列化当前页数据为JSON
+    # 使用列表推导式生成数据，更加简洁和高效
+    current_page_data = [{
+        'id': song.id,
+        'title': song.title,
+        'artist': song.artist,
+        'album': song.album,
+        'release_date': song.release_date.strftime('%Y-%m-%d'),
+        'cover_image': song.cover_image.url if song.cover_image and song.cover_image_exists() else None,
+        'play_count': song.play_count,
+        'category': song.category,
+        'file_size': song.file_size
+    } for song in music_page]
+    
+    # 获取当前分类的中文名称
+    current_category_name = ''
+    if category:
+        for cat_code, cat_name in category_choices:
+            if cat_code == category:
+                current_category_name = cat_name
+                break
+    
+    context = {
+        'music': music_page,
         'is_paginated': paginator.num_pages > 1,
-        'page_obj': music
-    })
+        'page_obj': music_page,
+        'music_json': json.dumps(current_page_data),
+        'categories_json': json.dumps([cat[0] for cat in category_choices]),
+        'category_choices': category_choices,
+        'current_sort': sort,
+        'current_category': category,
+        'current_category_name': current_category_name,
+        'current_query': query
+    }
+    
+    return render(request, 'music/music_list.html', context)
 
 # 上传音乐视图
 @login_required
@@ -57,7 +125,18 @@ def upload_music(request):
             messages.error(request, '请检查表单填写是否正确。')
     else:
         form = MusicForm()
-    return render(request, 'music/upload_music.html', {'form': form})
+    
+    # 获取分类选项
+    category_choices = [
+        ('pop', '流行'),
+        ('rock', '摇滚'),
+        ('classical', '古典')
+    ]
+    
+    return render(request, 'music/upload_music.html', {
+        'form': form,
+        'categories_json': json.dumps([cat[0] for cat in category_choices])
+    })
 
 # 音乐详细信息视图
 @login_required
@@ -141,72 +220,116 @@ def download_music(request, pk):
 
 @login_required
 def recommended_music(request):
-    # 获取用户最近30天的播放历史
+    """基于用户历史推荐音乐"""
+    # 1. 获取用户播放历史
     recent_days = 30
     recent_date = timezone.now() - timedelta(days=recent_days)
-    
-    # 获取用户最近播放的音乐ID列表
     recent_play_ids = list(PlayHistory.objects.filter(
         user=request.user,
         played_at__gte=recent_date
     ).values_list('music_id', flat=True))
     
-    # 基于用户最近播放的音乐推荐
+    # 2. 检查数据库中是否有音乐
+    if Music.objects.count() == 0:
+        return render(request, 'music/recommended_music.html', {
+            'recommended_music': [],
+            'error_message': '数据库中没有音乐，请先上传一些音乐',
+            'recommended_music_json': json.dumps([])
+        })
+    
+    # 3. 创建推荐策略
+    recommended = None
+    recommendation_type = ""  # 记录推荐类型，用于显示推荐理由
+    favorite_category_name = ""
+    
+    # 策略1: 基于用户最喜欢的类别推荐
     if recent_play_ids:
-        # 获取用户最常听的音乐类别
+        # 获取用户最喜欢的类别
         favorite_categories = Music.objects.filter(
             id__in=recent_play_ids
-        ).values('category').annotate(count=Count('id')).order_by('-count')
+        ).values('category').annotate(
+            count=Count('id')
+        ).order_by('-count')
         
         if favorite_categories.exists():
-            # 获取用户最常听的类别
             favorite_category = favorite_categories[0]['category']
-            
-            # 获取该类别下所有音乐的推荐分数
+            favorite_category_name = favorite_category
+            # 获取该类别下的推荐音乐
             recommended = Music.objects.filter(
                 category=favorite_category
             ).exclude(
                 id__in=recent_play_ids
             ).annotate(
-                score=(
-                    F('play_count') * 0.6 +
-                    F('download_count') * 0.2 +
-                    Count('comments') * 0.2
-                )
+                score=F('play_count') * 0.6 + 
+                      F('download_count') * 0.2 + 
+                      Count('comments') * 0.2
             ).order_by('-score')[:10]
             
-            # 如果推荐数量不足，补充最新上传的音乐
-            if recommended.count() < 10:
-                remaining_count = 10 - recommended.count()
-                additional_music = Music.objects.filter(
-                    category=favorite_category
-                ).exclude(
-                    id__in=recent_play_ids + list(recommended.values_list('id', flat=True))
-                ).order_by('-release_date')[:remaining_count]
-                recommended = list(recommended) + list(additional_music)
-        else:
-            # 如果没有类别信息，基于全局热度推荐
-            recommended = Music.objects.exclude(
-                id__in=recent_play_ids
-            ).annotate(
-                score=(
-                    F('play_count') * 0.6 +
-                    F('download_count') * 0.2 +
-                    Count('comments') * 0.2
-                )
-            ).order_by('-score')[:10]
-    else:
-        # 如果没有播放记录，基于全局热度推荐
-        recommended = Music.objects.annotate(
-            score=(
-                F('play_count') * 0.6 +
-                F('download_count') * 0.2 +
-                Count('comments') * 0.2
-            )
-        ).order_by('-score')[:10]
+            if recommended.exists():
+                recommendation_type = "category"
     
+    # 策略2: 如果策略1没有足够结果或用户没有历史，使用全局热度推荐
+    if not recommended or recommended.count() < 5:
+        recommended = Music.objects.exclude(
+            id__in=recent_play_ids if recent_play_ids else []
+        ).annotate(
+            score=F('play_count') * 0.6 + 
+                  F('download_count') * 0.2 + 
+                  Count('comments') * 0.2
+        ).order_by('-score')[:10]
+        
+        if recommended.exists() and recommendation_type != "category":
+            recommendation_type = "popularity"
+    
+    # 策略3: 如果都没结果，推荐最新音乐
+    if not recommended or recommended.count() == 0:
+        recommended = Music.objects.order_by('-release_date')[:10]
+        
+        if recommended.exists() and recommendation_type == "":
+            recommendation_type = "latest"
+    
+    # 4. 序列化音乐数据
+    recommended_music_data = []
+    try:
+        for song in recommended:
+            # 添加错误处理，防止访问不存在的文件
+            cover_image_url = None
+            if song.cover_image and song.cover_image_exists():
+                cover_image_url = song.cover_image.url
+            
+            # 根据推荐类型生成推荐理由
+            recommendation_reason = ""
+            if recommendation_type == "category":
+                recommendation_reason = f"因为您喜欢{favorite_category_name}类音乐"
+            elif recommendation_type == "popularity":
+                recommendation_reason = "这是热门音乐，很多人都在听"
+            else:
+                recommendation_reason = "这是最新上传的音乐，不容错过"
+                
+            recommended_music_data.append({
+                'id': song.id,
+                'title': song.title,
+                'artist': song.artist,
+                'album': song.album,
+                'release_date': song.release_date.strftime('%Y-%m-%d'),
+                'cover_image': cover_image_url,
+                'play_count': song.play_count,
+                'category': song.category,
+                'file_size': song.file_size,
+                'reason': recommendation_reason
+            })
+    except Exception as e:
+        # 只记录错误但不中断
+        print(f"序列化推荐数据时出错: {e}", file=sys.stderr)
+        recommended_music_data = [{'id': 0, 'title': '暂无推荐音乐', 'artist': '-', 'album': '-'}]
+    
+    # 5. 返回结果
     return render(request, 'music/recommended_music.html', {
-        'recommended_music': recommended
+        'recommended_music': recommended,
+        'recommended_music_json': json.dumps(recommended_music_data),
+        'recommendation_type': recommendation_type,
+        'favorite_category': favorite_category_name,
+        'is_staff': request.user.is_staff
     })
 
 @login_required
